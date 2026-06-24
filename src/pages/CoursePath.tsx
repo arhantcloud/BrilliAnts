@@ -72,7 +72,8 @@ export default function CoursePath() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="bg-brand-500 px-5 pb-6 pt-8 text-white">
+      <header className="bg-brand-500 px-5 pb-6 pt-8 text-white sm:px-8">
+        <div className="mx-auto w-full max-w-5xl">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-100">
@@ -110,9 +111,11 @@ export default function CoursePath() {
             />
           </div>
         </div>
+        </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-5 py-5">
+      <main className="flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-8">
+        <div className="mx-auto w-full max-w-5xl">
         {nextLesson && (
           <button
             onClick={() => navigate(`/lesson/${nextLesson.id}`)}
@@ -149,7 +152,7 @@ export default function CoursePath() {
         <h2 className="mb-3 px-1 text-sm font-bold uppercase tracking-wide text-slate-400">
           Lesson path
         </h2>
-        <ul className="space-y-3">
+        <ul className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0 lg:grid-cols-3">
           {course.lessons.map((lesson, i) => {
             const status = lessonStatus(lesson.id);
             const locked = status === "locked";
@@ -185,6 +188,7 @@ export default function CoursePath() {
         <p className="mt-6 text-center text-xs text-slate-400">
           Signed in as {user?.email}
         </p>
+        </div>
       </main>
     </div>
   );

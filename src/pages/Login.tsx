@@ -25,7 +25,8 @@ export default function Login() {
   }
 
   return (
-    <div className="flex h-full flex-col justify-center px-6 py-10">
+    <div className="flex h-full flex-col items-center justify-center px-6 py-10">
+      <div className="w-full max-w-md">
       <div className="mb-8 text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500 text-3xl font-black text-white shadow-lg">
           n!
@@ -118,6 +119,7 @@ export default function Login() {
           Firebase keys in <code>.env</code> for real cross-device sync.
         </p>
       )}
+      </div>
     </div>
   );
 }

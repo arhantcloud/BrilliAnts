@@ -32,7 +32,7 @@ export default function App() {
   const { user, loading } = useAuth();
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col bg-[#f6f8fb]">
+    <div className="flex h-full w-full flex-col bg-[#f6f8fb]">
       <Routes>
         <Route
           path="/login"

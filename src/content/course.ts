@@ -54,14 +54,14 @@ export const course: Course = {
         {
           id: "l2-s2",
           type: "custom",
-          component: "build-podium",
-          title: "Build the podium",
+          component: "factorials",
+          title: "Factorials",
         },
         {
           id: "l2-s3",
           type: "custom",
-          component: "factorials",
-          title: "Factorials",
+          component: "build-podium",
+          title: "Race to the podium",
         },
         {
           id: "l2-s4",
@@ -72,8 +72,8 @@ export const course: Course = {
         {
           id: "l2-s5",
           type: "custom",
-          component: "books-mcq",
-          title: "Line up the books",
+          component: "permutation-formula",
+          title: "The permutation formula",
         },
       ],
     },
@@ -90,12 +90,6 @@ export const course: Course = {
           title: "Choices that don't run out",
         },
         {
-          id: "l3-s2",
-          type: "custom",
-          component: "build-flips",
-          title: "Build a coin-flip sequence",
-        },
-        {
           id: "l3-s3",
           type: "custom",
           component: "power-explorer",
@@ -110,8 +104,8 @@ export const course: Course = {
         {
           id: "l3-s5",
           type: "custom",
-          component: "pin-mcq",
-          title: "Count the PINs",
+          component: "crack-the-code",
+          title: "Crack the code",
         },
       ],
     },
@@ -142,8 +136,8 @@ export const course: Course = {
         {
           id: "l4-s4",
           type: "custom",
-          component: "cards-mcq",
-          title: "Count the hands",
+          component: "handshake-party",
+          title: "The handshake party",
         },
       ],
     },
@@ -169,14 +163,14 @@ export const course: Course = {
         {
           id: "l5-s3",
           type: "custom",
-          component: "distribute-build",
-          title: "Make the distribution",
+          component: "stars-bars-formula",
+          title: "The stars-and-bars formula",
         },
         {
           id: "l5-s4",
           type: "custom",
-          component: "multiset-mcq",
-          title: "Count the distributions",
+          component: "donut-box",
+          title: "The donut box",
         },
       ],
     },

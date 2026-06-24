@@ -12,33 +12,26 @@ const PEOPLE: Person[] = [
 ];
 
 const K = 3;
-const CORRECT = ["ana", "cy", "eve"];
 
-function choose(n: number, k: number): number {
-  if (k < 0 || k > n) return 0;
-  let r = 1;
-  for (let i = 0; i < k; i++) r = (r * (n - i)) / (i + 1);
-  return Math.round(r);
+function name(id: string) {
+  return PEOPLE.find((p) => p.id === id)!.name;
 }
 
 export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
-  const [selected, setSelected] = useState<string[]>([]);
+  // `picked` keeps tap ORDER; the team is the sorted set of the same ids.
+  const [picked, setPicked] = useState<string[]>([]);
   const [solved, setSolved] = useState(false);
 
-  const full = selected.length === K;
-  const isCorrect =
-    full && CORRECT.every((id) => selected.includes(id));
+  const full = picked.length === K;
+  const teamSet = [...picked].sort();
 
   function toggle(id: string) {
     if (solved) return;
-    setSelected((sel) => {
+    setPicked((sel) => {
       if (sel.includes(id)) return sel.filter((x) => x !== id);
       if (sel.length >= K) return sel;
       const next = [...sel, id];
-      if (
-        next.length === K &&
-        CORRECT.every((c) => next.includes(c))
-      ) {
+      if (next.length === K) {
         setSolved(true);
         onComplete();
       }
@@ -46,9 +39,16 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
     });
   }
 
-  // Complete teams still consistent with the current (partial) selection.
-  const consistent = choose(PEOPLE.length - selected.length, K - selected.length);
-  const total = choose(PEOPLE.length, K);
+  function shuffleTaps() {
+    setPicked((sel) => {
+      const a = [...sel];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    });
+  }
 
   return (
     <div>
@@ -56,20 +56,19 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
         {slide.title ?? "Pick the team"}
       </h2>
       <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
-        Only <b>Ana</b>, <b>Cy</b>, and <b>Eve</b> are free on Tuesday. Tap to
-        pick the 3-person team that can meet — a team is a <i>set</i>, so the
-        order you tap doesn't matter.
+        Pick any <b>3</b> of these 5 friends for a team. The <b>order</b> you tap
+        them in doesn't matter — a team is just a <i>set</i> of people.
       </p>
 
       {/* People */}
       <div className="mt-5 flex flex-wrap justify-center gap-2.5">
         {PEOPLE.map((p) => {
-          const on = selected.includes(p.id);
+          const on = picked.includes(p.id);
           return (
             <button
               key={p.id}
               onClick={() => toggle(p.id)}
-              className={`relative flex h-16 w-16 flex-col items-center justify-center rounded-2xl text-sm font-bold text-white shadow-sm transition active:scale-95 ${p.color} ${
+              className={`relative flex h-16 w-16 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-sm transition active:scale-95 ${p.color} ${
                 on ? "ring-4 ring-brand-300" : "opacity-80"
               }`}
             >
@@ -84,55 +83,55 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
         })}
       </div>
 
-      <div className="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] font-semibold text-slate-300">
-            Selected set
+      {/* Tap order vs. the set */}
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border-2 border-slate-100 bg-white p-3 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            Tap order
           </p>
-          <p className="text-[13px] font-bold text-brand-300">
-            {consistent} of {total} teams match
+          <p className="mt-2 text-[15px] font-bold text-slate-600">
+            {picked.length ? picked.map(name).join(" → ") : "—"}
           </p>
         </div>
-        <p className="mt-2 text-lg font-extrabold">
-          {"{ "}
-          {selected.length
-            ? selected
-                .map((id) => PEOPLE.find((p) => p.id === id)!.name)
-                .join(", ")
-            : "—"}
-          {" }"}
-        </p>
-        <p className="mt-1 text-[12px] text-slate-400">
-          There are C(5, 3) = 10 possible teams in all.
-        </p>
+        <div className="rounded-2xl border-2 border-brand-200 bg-brand-50 p-3 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-brand-500">
+            Team (set)
+          </p>
+          <p className="mt-2 text-[15px] font-bold text-brand-700">
+            {picked.length ? `{ ${teamSet.map(name).join(", ")} }` : "{ }"}
+          </p>
+        </div>
       </div>
 
-      {full && (
-        <div
-          className={`mt-4 rounded-xl px-4 py-3 text-sm ${
-            isCorrect
-              ? "bg-emerald-50 text-emerald-800"
-              : "bg-amber-50 text-amber-900"
-          }`}
-        >
-          <p className="font-bold">
-            {isCorrect ? "Correct!" : "Not quite — try again"}
+      {full ? (
+        <div className="mt-4 rounded-2xl bg-slate-900 p-5 text-center text-white">
+          <p className="text-sm">
+            Same three people, <b>any</b> tap order → the same team. That's a{" "}
+            <b className="text-emerald-300">combination</b>, written{" "}
+            <b className="text-emerald-300">C(5, 3)</b>.
           </p>
-          <p className="mt-0.5">
-            {isCorrect
-              ? "A team is a set: {Ana, Cy, Eve} is the same no matter the order, and nobody repeats — a combination."
-              : "Who is free on Tuesday? Pick exactly those three."}
-          </p>
+          <div className="mt-3 flex justify-center gap-2">
+            <button
+              onClick={shuffleTaps}
+              className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold ring-1 ring-white/20 transition active:scale-95"
+            >
+              Shuffle tap order
+            </button>
+            <button
+              onClick={() => {
+                setPicked([]);
+                setSolved(false);
+              }}
+              className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold ring-1 ring-white/20 transition active:scale-95"
+            >
+              Pick again
+            </button>
+          </div>
         </div>
-      )}
-
-      {full && !solved && (
-        <button
-          onClick={() => setSelected([])}
-          className="btn-primary mt-3 w-full"
-        >
-          Clear
-        </button>
+      ) : (
+        <p className="mt-4 text-center text-xs text-slate-400">
+          {picked.length}/{K} picked — tap {K - picked.length} more.
+        </p>
       )}
     </div>
   );

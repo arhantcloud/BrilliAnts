@@ -124,7 +124,8 @@ export default function LessonPlayer() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-3 px-4 pb-3 pt-4">
+      <header className="px-4 pb-3 pt-4 sm:px-8">
+        <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
         <button
           onClick={() => navigate("/")}
           aria-label="Exit lesson"
@@ -148,9 +149,11 @@ export default function LessonPlayer() {
         <span className="w-12 text-right text-xs font-bold text-slate-400">
           {current + 1}/{total}
         </span>
+        </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-5 py-4">
+      <main className="flex-1 overflow-y-auto px-5 py-4 sm:px-8 sm:py-6">
+        <div className="mx-auto w-full max-w-xl">
         {slide.type === "concept" && (
           <ConceptSlideView
             key={slide.id}
@@ -179,9 +182,11 @@ export default function LessonPlayer() {
             onComplete={handleSlideComplete}
           />
         )}
+        </div>
       </main>
 
-      <footer className="border-t border-slate-100 bg-white px-5 py-4">
+      <footer className="border-t border-slate-100 bg-white px-5 py-4 sm:px-8">
+        <div className="mx-auto w-full max-w-xl">
         <button
           onClick={onContinue}
           disabled={!advanceReady}
@@ -189,6 +194,7 @@ export default function LessonPlayer() {
         >
           {isLast ? "Finish lesson" : "Continue"}
         </button>
+        </div>
       </footer>
     </div>
   );
