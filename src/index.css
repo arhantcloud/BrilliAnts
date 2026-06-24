@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Ice-cream scoop flavors (slide 2). Three synchronized schedules so that in
+ * every hold phase EXACTLY two scoops share a flavor, and the matching pair
+ * rotates: phase 1 -> A,B match; phase 2 -> B,C match; phase 3 -> A,C match.
+ * Defined here (not in tailwind.config.js) so edits hot-reload reliably.
+ * pink #f472b6, amber #fbbf24, emerald #34d399
+ */
+@keyframes scoopA {
+  0%, 28% { background-color: #f472b6; }
+  33%, 61% { background-color: #fbbf24; }
+  66%, 94% { background-color: #fbbf24; }
+  100% { background-color: #f472b6; }
+}
+@keyframes scoopB {
+  0%, 28% { background-color: #f472b6; }
+  33%, 61% { background-color: #34d399; }
+  66%, 94% { background-color: #f472b6; }
+  100% { background-color: #f472b6; }
+}
+@keyframes scoopC {
+  0%, 28% { background-color: #fbbf24; }
+  33%, 61% { background-color: #34d399; }
+  66%, 94% { background-color: #fbbf24; }
+  100% { background-color: #fbbf24; }
+}
+.animate-scoopA { animation: scoopA 5.4s ease-in-out infinite; }
+.animate-scoopB { animation: scoopB 5.4s ease-in-out infinite; }
+.animate-scoopC { animation: scoopC 5.4s ease-in-out infinite; }
+
+/* Slowly rotating pizza (slide 3) — rotation hints that order doesn't matter. */
+@keyframes pizzaspin { to { transform: rotate(360deg); } }
+.animate-pizzaspin { animation: pizzaspin 18s linear infinite; }
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #f6f8fb;
+  color: #14223a;
+  /* Prevent rubber-band / accidental zoom on mobile while dragging. */
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-3 font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600;
+  }
+  .btn-ghost {
+    @apply btn bg-white text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-sm ring-1 ring-slate-100;
+  }
+}
