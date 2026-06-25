@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
-import { useAuth } from "./auth/AuthContext";
+import { useAuth } from "./auth/auth-context";
 import Login from "./pages/Login";
 import CoursePath from "./pages/CoursePath";
 import LessonPlayer from "./pages/LessonPlayer";
+import QuizPlayer from "./pages/QuizPlayer";
 import type { ReactNode } from "react";
 
 function FullScreenLoader() {
@@ -26,6 +27,13 @@ function RequireAuth({ children }: { children: ReactNode }) {
 function LessonPlayerRoute() {
   const { lessonId } = useParams();
   return <LessonPlayer key={lessonId} />;
+}
+
+// Keyed by lessonId so switching quizzes remounts the player and rebuilds a
+// fresh question set instead of reusing the previous lesson's quiz state.
+function QuizPlayerRoute() {
+  const { lessonId } = useParams();
+  return <QuizPlayer key={lessonId} />;
 }
 
 export default function App() {
@@ -59,6 +67,14 @@ export default function App() {
           element={
             <RequireAuth>
               <LessonPlayerRoute />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/quiz/:lessonId"
+          element={
+            <RequireAuth>
+              <QuizPlayerRoute />
             </RequireAuth>
           }
         />

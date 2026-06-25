@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -13,21 +6,11 @@ import {
   signOut,
 } from "firebase/auth";
 import { auth, firebaseEnabled } from "../firebase";
-
-export type AuthUser = {
-  uid: string;
-  email: string;
-};
-
-type AuthContextValue = {
-  user: AuthUser | null;
-  loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
-  logOut: () => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+import {
+  AuthContext,
+  type AuthContextValue,
+  type AuthUser,
+} from "./auth-context";
 
 const LOCAL_USERS_KEY = "cc_local_users";
 const LOCAL_SESSION_KEY = "cc_local_session";
@@ -59,29 +42,30 @@ function toFriendlyError(err: unknown): Error {
   return new Error(map[code] ?? (err as Error)?.message ?? "Something went wrong.");
 }
 
+function readLocalSession(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_SESSION_KEY);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  // In local mode the session is known synchronously from localStorage, so we
+  // can seed it via a lazy initializer instead of a setState inside an effect.
+  const [user, setUser] = useState<AuthUser | null>(() =>
+    firebaseEnabled && auth ? null : readLocalSession(),
+  );
+  const [loading, setLoading] = useState(() => Boolean(firebaseEnabled && auth));
 
   useEffect(() => {
-    if (firebaseEnabled && auth) {
-      const unsub = onAuthStateChanged(auth, (fbUser) => {
-        setUser(
-          fbUser ? { uid: fbUser.uid, email: fbUser.email ?? "" } : null,
-        );
-        setLoading(false);
-      });
-      return unsub;
-    }
-
-    // Local mode: restore session from localStorage.
-    try {
-      const raw = localStorage.getItem(LOCAL_SESSION_KEY);
-      setUser(raw ? (JSON.parse(raw) as AuthUser) : null);
-    } catch {
-      setUser(null);
-    }
-    setLoading(false);
+    if (!(firebaseEnabled && auth)) return;
+    const unsub = onAuthStateChanged(auth, (fbUser) => {
+      setUser(fbUser ? { uid: fbUser.uid, email: fbUser.email ?? "" } : null);
+      setLoading(false);
+    });
+    return unsub;
   }, []);
 
   const value = useMemo<AuthContextValue>(() => {
@@ -147,10 +131,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
 }

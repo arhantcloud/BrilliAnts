@@ -4,58 +4,6 @@ export type LessonStatus =
   | "in_progress"
   | "completed";
 
-export type ChoiceOption = {
-  id: string;
-  label: string;
-};
-
-/** A teaching slide: explains an idea, no required interaction. */
-export type ConceptSlide = {
-  id: string;
-  type: "concept";
-  title: string;
-  body: string;
-  /** Optional list of bullet takeaways. */
-  points?: string[];
-};
-
-/** Multiple-choice slide. */
-export type McqSlide = {
-  id: string;
-  type: "mcq";
-  title: string;
-  prompt: string;
-  options: ChoiceOption[];
-  correctOptionId: string;
-  /** Shown after a correct answer. */
-  explanation: string;
-  /** Shown after a wrong answer to help recover. */
-  hint: string;
-};
-
-/**
- * Drag/tap-to-build slide. The learner arranges `items` into the correct order.
- * A live visual (sequence + running count) responds as they build.
- */
-export type BuildSequenceSlide = {
-  id: string;
-  type: "build_sequence";
-  title: string;
-  prompt: string;
-  /** Items presented in scrambled order. */
-  items: ChoiceOption[];
-  /** Correct ordering as a list of item ids. */
-  correctOrder: string[];
-  /**
-   * Visual mode that reacts to the current arrangement:
-   * - "permutation": shows running count of distinct arrangements (n!/(n-k)!)
-   * - "sequence": shows the built sequence as a sample-space path
-   */
-  visual: "permutation" | "sequence";
-  explanation: string;
-  hint: string;
-};
-
 /**
  * A bespoke interactive slide rendered by a custom React component.
  * `component` is a key into the custom-slide registry
@@ -71,7 +19,7 @@ export type CustomSlide = {
   title?: string;
 };
 
-export type Slide = ConceptSlide | McqSlide | BuildSequenceSlide | CustomSlide;
+export type Slide = CustomSlide;
 
 export type Lesson = {
   id: string;
@@ -105,3 +53,58 @@ export type UserStats = {
   lastActiveDate: string | null;
   lessonsCompletedCount: number;
 };
+
+/**
+ * A single procedurally-generated quiz question.
+ *
+ * Templates (src/quiz/templates/**) build one of these per slot of an attempt:
+ * `params` holds the randomized numbers/strings the question view renders, and
+ * `answer` is the expected (clean) value the learner must produce. The view in
+ * QuizQuestionSpec consumes this shape — it is interactive, not multiple-choice.
+ */
+export type GeneratedQuestion = {
+  /** Randomized inputs the question view renders (numbers and/or labels). */
+  params: Record<string, number | string>;
+  /** The expected answer the learner must produce. */
+  answer: number | string;
+};
+
+/**
+ * A lesson's post-lesson quiz definition. References question templates by id
+ * (see src/quiz/registry.ts); `drawQuiz` (src/content/quizzes.ts) cycles through
+ * `templateIds` to generate `questionCount` fresh questions per attempt.
+ */
+export type LessonQuiz = {
+  /** Id of the lesson this quiz belongs to (matches Lesson.id). */
+  lessonId: string;
+  /** Template ids (src/quiz/registry.ts) this quiz draws questions from. */
+  templateIds: string[];
+  /** Number of questions presented per attempt (5 for the MVP). */
+  questionCount: number;
+  /**
+   * Optional per-question style indices applied (shuffled) across an attempt.
+   * Lets a single template render several interaction variants in fixed
+   * proportions (e.g. Lesson 2: two cross-out, two fill-formula, one product).
+   */
+  stylePlan?: number[];
+};
+
+/**
+ * Best-of result for a single lesson's quiz, persisted to Firestore. We keep the
+ * best score across attempts; "best %" is `bestCorrect / total * 100`.
+ */
+export type QuizResult = {
+  /** Highest number of correct answers achieved across attempts. */
+  bestCorrect: number;
+  /** Total questions in the attempt that produced the best score. */
+  total: number;
+  /** How many times the learner has attempted this quiz. */
+  attempts: number;
+  updatedAt: number;
+};
+
+/** Map of lessonId -> best quiz result. */
+export type QuizResultMap = Record<string, QuizResult>;
+
+/** Status of a lesson's post-lesson quiz, derived from progress + results. */
+export type QuizStatus = "locked" | "available" | "failed" | "passed";

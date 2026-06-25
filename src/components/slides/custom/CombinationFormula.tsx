@@ -31,19 +31,12 @@ const TOKENS: Token[] = [
 ];
 
 type Slot = { id: string; expect: string };
-const NUM_SLOTS: Slot[] = [
-  { id: "numA", expect: "n" },
-  { id: "numB", expect: "!" },
-];
-// denominator: k! ( n − k )!
+// C(n, k) = P(n, k) / k!  — numerator is fixed; learner builds the k! denominator.
 const DEN_SLOTS: Slot[] = [
   { id: "denA", expect: "k" },
   { id: "denB", expect: "!" },
-  { id: "denC", expect: "n" },
-  { id: "denD", expect: "k" },
-  { id: "denE", expect: "!" },
 ];
-const ALL_SLOTS = [...NUM_SLOTS, ...DEN_SLOTS];
+const ALL_SLOTS = [...DEN_SLOTS];
 
 type Assignments = Record<string, string | null>;
 
@@ -131,8 +124,9 @@ export default function CombinationFormula({
         {slide.title ?? "Divide out the orderings"}
       </h2>
       <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
-        A combination takes the ordered picks and divides out every way each
-        chosen group could be arranged. Build the formula for <b>C(n, k)</b>.
+        A combination takes the ordered picks <b>P(n, k)</b> and divides out the{" "}
+        <b>k!</b> ways each chosen group can be arranged. Finish the denominator
+        of <b>C(n, k)</b>.
       </p>
 
       <DndContext
@@ -147,26 +141,15 @@ export default function CombinationFormula({
             C(n, k) =
           </span>
           <div className="flex flex-col items-center">
-            <div className="flex items-end gap-1 pb-1.5">
-              {box("numA")}
-              {box("numB")}
+            <div className="flex items-end pb-1.5">
+              <span className="text-2xl font-extrabold text-slate-800">
+                P(n, k)
+              </span>
             </div>
-            <div className="h-1 w-full min-w-[210px] rounded bg-slate-800" />
-            <div className="flex flex-wrap items-end justify-center gap-1 pt-1.5">
+            <div className="h-1 w-full min-w-[150px] rounded bg-slate-800" />
+            <div className="flex items-end gap-1 pt-1.5">
               {box("denA")}
               {box("denB")}
-              <span className="px-0.5 pb-1 text-2xl font-extrabold text-slate-700">
-                (
-              </span>
-              {box("denC")}
-              <span className="pb-1 text-2xl font-extrabold text-slate-700">
-                −
-              </span>
-              {box("denD")}
-              <span className="px-0.5 pb-1 text-2xl font-extrabold text-slate-700">
-                )
-              </span>
-              {box("denE")}
             </div>
           </div>
         </div>
@@ -194,20 +177,19 @@ export default function CombinationFormula({
         <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-center text-white">
           <p className="animate-fade-in text-xl font-extrabold tracking-wide">
             C(5, 3) ={" "}
-            <span className="text-emerald-300">5! / (3! · 2!)</span> = 10
+            <span className="text-emerald-300">P(5, 3) / 3! = 60 / 6</span> = 10
           </p>
           <p className="mt-2 text-[13px] text-slate-300">
-            The k! divides out each group's orderings; the (n−k)! divides out the
-            ones you didn't pick.
+            P(n, k) counts the ordered picks; dividing by k! collapses each
+            group's orderings into a single team.
           </p>
         </div>
       ) : allFilled ? (
         <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="font-bold">Not quite</p>
           <p className="mt-0.5">
-            Top is the full <b>n!</b>. The bottom divides by <b>k!</b> (orderings
-            of your group) <i>and</i> <b>(n−k)!</b> (the rest). Tap a tile to send
-            it back.
+            The numerator is <b>P(n, k)</b>. The denominator should be <b>k!</b> —
+            the orderings of your chosen group. Tap a tile to send it back.
           </p>
         </div>
       ) : (

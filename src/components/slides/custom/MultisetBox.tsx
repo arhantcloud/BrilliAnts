@@ -1,6 +1,11 @@
 import { useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
+/**
+ * Lesson 5, slide 5 (capstone) — a multiset count from scratch: choose k donuts
+ * from n flavors, repeats allowed, order ignored. Count = C(k + n − 1, n − 1).
+ */
+
 const FLAVORS = [
   { name: "Strawberry", ring: "#fb7185", glaze: "#fbcfe8" },
   { name: "Blueberry", ring: "#60a5fa", glaze: "#bfdbfe" },
@@ -20,19 +25,29 @@ function choose(n: number, k: number): number {
   return Math.round(r);
 }
 
-export default function DonutBox({ slide, onComplete }: CustomSlideProps) {
+export default function MultisetBox({ slide, onComplete }: CustomSlideProps) {
   const [n, setN] = useState(3); // flavors
   const [k, setK] = useState(3); // donuts in the box
-  const [answer, setAnswer] = useState("");
+  const [topInput, setTopInput] = useState("");
+  const [bottomInput, setBottomInput] = useState("");
+  const [answerInput, setAnswerInput] = useState("");
   const [solved, setSolved] = useState(false);
 
   const top = k + n - 1;
   const bottom = n - 1;
   const total = choose(top, bottom);
-  const correct = answer.trim() !== "" && Number(answer) === total;
+
+  const topOk = topInput.trim() !== "" && Number(topInput) === top;
+  const bottomOk = bottomInput.trim() !== "" && Number(bottomInput) === bottom;
+  const subDone = topOk && bottomOk;
+  const answerOk = answerInput.trim() !== "" && Number(answerInput) === total;
+
+  const clean = (raw: string) => raw.replace(/\D/g, "").slice(0, 4);
 
   function clear() {
-    if (!solved) setAnswer("");
+    setTopInput("");
+    setBottomInput("");
+    setAnswerInput("");
   }
   function changeN(v: number) {
     if (solved) return;
@@ -44,11 +59,19 @@ export default function DonutBox({ slide, onComplete }: CustomSlideProps) {
     setK(v);
     clear();
   }
+  function onTop(raw: string) {
+    if (subDone || solved) return;
+    setTopInput(clean(raw));
+  }
+  function onBottom(raw: string) {
+    if (subDone || solved) return;
+    setBottomInput(clean(raw));
+  }
   function onAnswer(raw: string) {
     if (solved) return;
-    const d = raw.replace(/\D/g, "").slice(0, 4);
-    setAnswer(d);
-    if (d !== "" && Number(d) === total) {
+    const d = clean(raw);
+    setAnswerInput(d);
+    if (subDone && d !== "" && Number(d) === total) {
       setSolved(true);
       onComplete();
     }
@@ -65,7 +88,7 @@ export default function DonutBox({ slide, onComplete }: CustomSlideProps) {
       <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
         A bakery has <b>{n}</b> flavors. You grab a box of <b>{k}</b> donuts —
         repeats are fine and the order in the box doesn't matter. How many
-        different boxes are possible?
+        different boxes (multisets) are possible?
       </p>
 
       {/* Steppers */}
@@ -91,43 +114,96 @@ export default function DonutBox({ slide, onComplete }: CustomSlideProps) {
         ))}
       </div>
 
-      {/* Readout */}
-      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-center text-white">
-        <p className="flex flex-wrap items-center justify-center gap-2 text-xl font-extrabold tracking-wide">
-          <span>
-            C({k}+{n}−1, {n}−1) = C({top}, {bottom}) =
-          </span>
-          {solved ? (
-            <span className="text-brand-300">{total}</span>
-          ) : (
-            <input
-              type="text"
-              inputMode="numeric"
-              aria-label="number of possible boxes"
-              value={answer}
-              onChange={(e) => onAnswer(e.target.value)}
-              placeholder="?"
-              className={`w-24 rounded-lg px-2 py-1 text-center text-xl font-extrabold outline-none transition ${
-                answer.trim() !== "" && !correct
-                  ? "bg-red-400/10 text-red-300 ring-2 ring-red-400"
-                  : "bg-white/10 text-brand-200 ring-2 ring-white/20 focus:ring-brand-300"
-              }`}
-            />
-          )}
+      {/* Readout — substitute n, k into the combination, then compute */}
+      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-white">
+        <p className="text-center text-[12px] font-semibold text-slate-300">
+          Fill in the combination, then count the boxes
         </p>
+        <div className="mt-3 space-y-2 text-xl font-extrabold tracking-wide">
+          <p className="text-center text-slate-200">C(k + n − 1, n − 1)</p>
+          <p className="flex flex-wrap items-center justify-center gap-2">
+            <span>= C(</span>
+            <NumInput
+              aria="combination top"
+              value={topInput}
+              onChange={onTop}
+              correct={topOk}
+              disabled={subDone || solved}
+            />
+            <span>,</span>
+            <NumInput
+              aria="combination bottom"
+              value={bottomInput}
+              onChange={onBottom}
+              correct={bottomOk}
+              disabled={subDone || solved}
+            />
+            <span>)</span>
+          </p>
+          {subDone && (
+            <p className="flex animate-fade-in flex-wrap items-center justify-center gap-2">
+              <span>=</span>
+              {solved ? (
+                <span className="text-brand-300">{total}</span>
+              ) : (
+                <NumInput
+                  aria="number of possible boxes"
+                  value={answerInput}
+                  onChange={onAnswer}
+                  correct={answerOk}
+                  disabled={solved}
+                />
+              )}
+            </p>
+          )}
+        </div>
       </div>
 
       {solved && (
         <div className="mt-4 animate-fade-in-up rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
           <p className="font-bold">Lesson 5 complete</p>
           <p className="mt-0.5">
-            {total} possible boxes. Choosing with repeats = distributing into
-            bins = stars and bars — the fourth and final counting world. Nice
-            work finishing the map!
+            {total} possible boxes. Choosing with repeats while ignoring order is
+            a <b>multiset</b>, counted by stars and bars — the fourth and final
+            counting world. Nice work finishing the map!
           </p>
         </div>
       )}
     </div>
+  );
+}
+
+function NumInput({
+  aria,
+  value,
+  onChange,
+  correct,
+  disabled,
+}: {
+  aria: string;
+  value: string;
+  onChange: (v: string) => void;
+  correct: boolean;
+  disabled: boolean;
+}) {
+  const filled = value.trim() !== "";
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={aria}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="?"
+      disabled={disabled}
+      className={`w-20 rounded-lg px-2 py-1 text-center text-xl font-extrabold outline-none transition ${
+        correct
+          ? "bg-emerald-400/20 text-emerald-300 ring-2 ring-emerald-400"
+          : filled
+            ? "bg-red-400/10 text-red-300 ring-2 ring-red-400"
+            : "bg-white/10 text-brand-200 ring-2 ring-white/20 focus:ring-brand-300"
+      }`}
+    />
   );
 }
 

@@ -34,42 +34,10 @@ const allSlides: Slide[] = course.lessons.flatMap((l) => l.slides);
 describe("slide validity by type", () => {
   it("custom slides reference a registered component", () => {
     for (const slide of allSlides) {
-      if (slide.type === "custom") {
-        expect(
-          customSlideRegistry[slide.component],
-          `missing registry entry for "${slide.component}"`,
-        ).toBeDefined();
-      }
-    }
-  });
-
-  it("mcq slides have a correct option that exists in options", () => {
-    for (const slide of allSlides) {
-      if (slide.type === "mcq") {
-        const ids = slide.options.map((o) => o.id);
-        expect(ids).toContain(slide.correctOptionId);
-        expect(new Set(ids).size).toBe(ids.length);
-        expect(slide.options.length).toBeGreaterThanOrEqual(2);
-      }
-    }
-  });
-
-  it("build_sequence slides have a correctOrder that is a permutation of items", () => {
-    for (const slide of allSlides) {
-      if (slide.type === "build_sequence") {
-        const itemIds = slide.items.map((i) => i.id).sort();
-        const orderIds = [...slide.correctOrder].sort();
-        expect(orderIds).toEqual(itemIds);
-      }
-    }
-  });
-
-  it("concept slides have a title and body", () => {
-    for (const slide of allSlides) {
-      if (slide.type === "concept") {
-        expect(slide.title.trim().length).toBeGreaterThan(0);
-        expect(slide.body.trim().length).toBeGreaterThan(0);
-      }
+      expect(
+        customSlideRegistry[slide.component],
+        `missing registry entry for "${slide.component}"`,
+      ).toBeDefined();
     }
   });
 });

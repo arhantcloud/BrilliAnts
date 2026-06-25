@@ -1,16 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { course } from "../content/course";
-import { useProgress } from "../progress/ProgressContext";
-import ConceptSlideView from "../components/slides/ConceptSlideView";
-import McqSlideView from "../components/slides/McqSlideView";
-import BuildSequenceView from "../components/slides/BuildSequenceView";
+import { getLessonQuiz } from "../content/quizzes";
+import { useProgress } from "../progress/progress-context";
 import CustomSlideView from "../components/slides/CustomSlideView";
 
 export default function LessonPlayer() {
   const { lessonId = "" } = useParams();
   const navigate = useNavigate();
-  const { resumeIndex, completeSlide, stats } = useProgress();
+  const { resumeIndex, completeSlide, stats, lessonStatus, quizStatus } =
+    useProgress();
 
   const lessonIndex = course.lessons.findIndex((l) => l.id === lessonId);
   const lesson = course.lessons[lessonIndex];
@@ -53,8 +52,8 @@ export default function LessonPlayer() {
     } else {
       // Reset readiness as we move to the next slide. Doing this here (rather
       // than in an effect keyed on `current`) avoids clobbering the incoming
-      // slide's own mount-time onComplete (e.g. concept slides), which runs
-      // after this parent update.
+      // slide's own mount-time onComplete (e.g. explore/review slides), which
+      // runs after this parent update.
       setAdvanceReady(false);
       setCurrent((c) => c + 1);
     }
@@ -87,24 +86,65 @@ export default function LessonPlayer() {
         </div>
 
         <div className="mt-8 w-full max-w-xs space-y-3">
+          {getLessonQuiz(lessonId) &&
+            (() => {
+              const quizPassed = quizStatus(lessonId) === "passed";
+              return (
+                <button
+                  onClick={() => navigate(`/quiz/${lessonId}`)}
+                  className="btn w-full bg-violet-600 text-white hover:bg-violet-700"
+                >
+                  {quizPassed ? "Review the quiz" : "Take the quiz"} →
+                </button>
+              );
+            })()}
+
           {nextLesson ? (
-            <>
-              <div className="rounded-2xl bg-brand-50 p-4 text-left ring-1 ring-brand-100">
-                <p className="text-xs font-semibold uppercase tracking-wide text-brand-400">
-                  Recommended next
-                </p>
-                <p className="mt-1 font-bold text-brand-900">
-                  {nextLesson.title}
-                </p>
-                <p className="text-sm text-brand-700">{nextLesson.summary}</p>
-              </div>
-              <button
-                onClick={() => navigate(`/lesson/${nextLesson.id}`)}
-                className="btn-primary w-full"
-              >
-                Start next lesson →
-              </button>
-            </>
+            (() => {
+              const nextLocked = lessonStatus(nextLesson.id) === "locked";
+              return (
+                <>
+                  <div
+                    className={`rounded-2xl p-4 text-left ring-1 ${
+                      nextLocked
+                        ? "bg-slate-50 ring-slate-100"
+                        : "bg-brand-50 ring-brand-100"
+                    }`}
+                  >
+                    <p
+                      className={`text-xs font-semibold uppercase tracking-wide ${
+                        nextLocked ? "text-slate-400" : "text-brand-400"
+                      }`}
+                    >
+                      {nextLocked ? "Locked next" : "Recommended next"}
+                    </p>
+                    <p
+                      className={`mt-1 font-bold ${
+                        nextLocked ? "text-slate-600" : "text-brand-900"
+                      }`}
+                    >
+                      {nextLesson.title}
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        nextLocked ? "text-slate-500" : "text-brand-700"
+                      }`}
+                    >
+                      {nextLocked
+                        ? "Pass the quiz above to unlock this lesson."
+                        : nextLesson.summary}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/lesson/${nextLesson.id}`)}
+                    disabled={nextLocked}
+                    className="btn-ghost w-full"
+                  >
+                    Start next lesson →
+                  </button>
+                </>
+              );
+            })()
           ) : (
             <div className="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
               <p className="font-bold text-emerald-800">
@@ -154,34 +194,11 @@ export default function LessonPlayer() {
 
       <main className="flex-1 overflow-y-auto px-5 py-4 sm:px-8 sm:py-6">
         <div className="mx-auto w-full max-w-xl">
-        {slide.type === "concept" && (
-          <ConceptSlideView
-            key={slide.id}
-            slide={slide}
-            onComplete={handleSlideComplete}
-          />
-        )}
-        {slide.type === "mcq" && (
-          <McqSlideView
-            key={slide.id}
-            slide={slide}
-            onComplete={handleSlideComplete}
-          />
-        )}
-        {slide.type === "build_sequence" && (
-          <BuildSequenceView
-            key={slide.id}
-            slide={slide}
-            onComplete={handleSlideComplete}
-          />
-        )}
-        {slide.type === "custom" && (
-          <CustomSlideView
-            key={slide.id}
-            slide={slide}
-            onComplete={handleSlideComplete}
-          />
-        )}
+        <CustomSlideView
+          key={slide.id}
+          slide={slide}
+          onComplete={handleSlideComplete}
+        />
         </div>
       </main>
 

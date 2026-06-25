@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/auth-context";
 import { firebaseEnabled } from "../firebase";
 
 export default function Login() {
@@ -28,11 +28,37 @@ export default function Login() {
     <div className="flex h-full flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-md">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500 text-3xl font-black text-white shadow-lg">
-          n!
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500 shadow-lg">
+          <svg
+            viewBox="0 0 64 64"
+            className="h-10 w-10"
+            role="img"
+            aria-label="ant"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* antennae */}
+            <path d="M29 13 L23 5" />
+            <path d="M35 13 L41 5" />
+            {/* left legs */}
+            <path d="M30 28 L18 22 L9 24" />
+            <path d="M30 31 L16 31 L7 33" />
+            <path d="M30 34 L18 40 L9 47" />
+            {/* right legs */}
+            <path d="M34 28 L46 22 L55 24" />
+            <path d="M34 31 L48 31 L57 33" />
+            <path d="M34 34 L46 40 L55 47" />
+            {/* body: head, thorax, abdomen */}
+            <ellipse cx="32" cy="15" rx="6" ry="5.5" fill="white" stroke="none" />
+            <ellipse cx="32" cy="30" rx="5" ry="7" fill="white" stroke="none" />
+            <ellipse cx="32" cy="47" rx="8.5" ry="10" fill="white" stroke="none" />
+          </svg>
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight">
-          Counting & Combinatorics
+          Brilli-Ants
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Learn to count anything, one short lesson at a time.

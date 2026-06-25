@@ -38,28 +38,22 @@ describe("custom slides: mount-complete behavior", () => {
 // Components that gate completion behind a correct interaction never complete
 // just by mounting.
 const GATED = [
-  "pizza-classify",
+  "connect-categories",
   "build-podium",
-  "books-mcq",
-  "build-flips",
-  "pin-mcq",
   "select-team",
-  "cards-mcq",
-  "distribute-build",
-  "multiset-mcq",
   "classify-examples",
   "fill-seats",
   "permute-k",
   "permutation-formula",
   "power-explorer",
   "crack-the-code",
-  "collapse-orders",
   "combination-formula",
   "handshake-party",
-  "two-stories",
-  "stars-bars",
-  "stars-bars-formula",
-  "donut-box",
+  "multiset-build",
+  "multiset-distribute",
+  "multiset-stars-bars",
+  "multiset-formula",
+  "multiset-box",
 ];
 
 describe("custom slides: gated slides do not complete on mount", () => {
@@ -70,86 +64,76 @@ describe("custom slides: gated slides do not complete on mount", () => {
   });
 });
 
-describe("gated MCQ custom slides complete on the correct answer", () => {
-  const cases: { component: string; correct: RegExp }[] = [
-    { component: "pin-mcq", correct: /^10,000$/ },
-    { component: "books-mcq", correct: /^120$/ },
-    { component: "cards-mcq", correct: /^10$/ },
-    { component: "multiset-mcq", correct: /^3$/ },
-    {
-      component: "pizza-classify",
-      correct: /Order doesn't matter, with replacement/,
-    },
+describe("connect-categories matching", () => {
+  // Each description connects to exactly one family name.
+  const PAIRS: [string, string][] = [
+    ["Order matters, No replacement", "Permutations"],
+    ["Order matters, With replacement", "Sequences"],
+    ["Order doesn't matter, No replacement", "Combinations"],
+    ["Order doesn't matter, With replacement", "Multisets"],
   ];
 
-  it.each(cases)(
-    "$component completes when the right option is checked",
-    async ({ component, correct }) => {
-      const user = userEvent.setup();
-      const onComplete = renderSlide(component);
-
-      await user.click(screen.getByRole("button", { name: correct }));
-      await user.click(screen.getByRole("button", { name: /check answer/i }));
-
-      expect(screen.getByText("Correct!")).toBeInTheDocument();
-      expect(onComplete).toHaveBeenCalledTimes(1);
-    },
-  );
-
-  it("pin-mcq shows a hint and does not complete on a wrong answer", async () => {
+  it("completes only after every description is matched correctly", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("pin-mcq");
+    const onComplete = renderSlide("connect-categories");
 
-    await user.click(screen.getByRole("button", { name: /^5040$/ }));
-    await user.click(screen.getByRole("button", { name: /check answer/i }));
+    for (let i = 0; i < PAIRS.length; i++) {
+      const [desc, name] = PAIRS[i];
+      await user.click(screen.getByRole("button", { name: desc }));
+      await user.click(screen.getByRole("button", { name }));
+      // Not complete until the final correct connection lands.
+      if (i < PAIRS.length - 1) {
+        expect(onComplete).not.toHaveBeenCalled();
+      }
+    }
 
-    expect(screen.getByText("Not quite — try again")).toBeInTheDocument();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/all four matched/i)).toBeInTheDocument();
+  });
+
+  it("does not complete while any match is wrong", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("connect-categories");
+
+    // Connect one description to the wrong family.
+    await user.click(
+      screen.getByRole("button", { name: "Order matters, No replacement" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Combinations" }));
+
     expect(onComplete).not.toHaveBeenCalled();
   });
 });
 
-describe("gated build/select custom slides", () => {
-  it("build-flips completes after building Heads, Tails, Heads", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("build-flips");
+describe("select-team: pick a team, lock it, then order it", () => {
+  // After locking Ana/Bo/Cy, these are all six orderings of that team.
+  const PERMS = [
+    ["Ana", "Bo", "Cy"],
+    ["Ana", "Cy", "Bo"],
+    ["Bo", "Ana", "Cy"],
+    ["Bo", "Cy", "Ana"],
+    ["Cy", "Ana", "Bo"],
+    ["Cy", "Bo", "Ana"],
+  ];
 
-    await user.click(screen.getByRole("button", { name: /^heads$/i }));
-    await user.click(screen.getByRole("button", { name: /^tails$/i }));
-    await user.click(screen.getByRole("button", { name: /^heads$/i }));
-
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Correct!")).toBeInTheDocument();
-  });
-
-  it("build-flips reports an incorrect sequence and lets you retry", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("build-flips");
-
-    await user.click(screen.getByRole("button", { name: /^tails$/i }));
-    await user.click(screen.getByRole("button", { name: /^tails$/i }));
-    await user.click(screen.getByRole("button", { name: /^tails$/i }));
-
-    expect(onComplete).not.toHaveBeenCalled();
-    expect(screen.getByText("Not quite — try again")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /try again/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("select-team completes when any three friends are chosen", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("select-team");
-
+  async function pickTeam(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: /^ana$/i }));
     await user.click(screen.getByRole("button", { name: /^bo$/i }));
-    expect(onComplete).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: /^cy$/i }));
+  }
 
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/combination/i)).toBeInTheDocument();
-  });
+  async function buildAllOrderings(user: ReturnType<typeof userEvent.setup>) {
+    for (const perm of PERMS) {
+      for (const nm of perm) {
+        await user.click(
+          screen.getByRole("button", { name: new RegExp(`^${nm}$`, "i") }),
+        );
+      }
+      await user.click(screen.getByRole("button", { name: /add ordering/i }));
+    }
+  }
 
-  it("select-team does not complete before three are chosen", async () => {
+  it("does not complete before three are chosen", async () => {
     const user = userEvent.setup();
     const onComplete = renderSlide("select-team");
 
@@ -157,20 +141,64 @@ describe("gated build/select custom slides", () => {
     await user.click(screen.getByRole("button", { name: /^cy$/i }));
 
     expect(onComplete).not.toHaveBeenCalled();
+    // Ordering phase is hidden until the team is locked.
+    expect(
+      screen.queryByRole("button", { name: /add ordering/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("distribute-build completes with one candy in each jar", async () => {
+  it("locks the team at three picks but does not complete yet", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("distribute-build");
+    const onComplete = renderSlide("select-team");
 
-    // Initially the only buttons are the two jars.
-    const jars = screen.getAllByRole("button");
-    await user.click(jars[0]);
-    const jarsAfter = screen.getAllByRole("button");
-    await user.click(jarsAfter[1]);
+    await pickTeam(user);
+
+    // Ordering phase now visible; choosing a fourth person is impossible.
+    expect(screen.getByText(/combination/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /add ordering/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^di$/i })).toBeDisabled();
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("completes after building all 3! orderings and entering 3! = 6", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("select-team");
+
+    await pickTeam(user);
+    await buildAllOrderings(user);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    await user.type(
+      screen.getByRole("textbox", { name: /factorial base/i }),
+      "3",
+    );
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.type(
+      screen.getByRole("textbox", { name: /total orderings/i }),
+      "6",
+    );
 
     expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Correct!")).toBeInTheDocument();
+  });
+
+  it("does not complete with the wrong factorial value", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("select-team");
+
+    await pickTeam(user);
+    await buildAllOrderings(user);
+    await user.type(
+      screen.getByRole("textbox", { name: /factorial base/i }),
+      "3",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /total orderings/i }),
+      "5",
+    );
+
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });
 
@@ -262,42 +290,6 @@ describe("permute-k interaction", () => {
       screen.getByRole("textbox", { name: /value it equals/i }),
       "120",
     );
-
-    expect(onComplete).not.toHaveBeenCalled();
-  });
-});
-
-describe("collapse-orders interaction", () => {
-  it("completes after collapsing and dividing 12 ÷ 2 = 6", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("collapse-orders");
-
-    // Inputs are hidden until the duplicates are collapsed.
-    await user.click(
-      screen.getByRole("button", { name: /collapse duplicates/i }),
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: /orderings\/team/i }),
-      "2",
-    );
-    expect(onComplete).not.toHaveBeenCalled();
-    await user.type(screen.getByRole("textbox", { name: /^teams$/i }), "6");
-
-    expect(onComplete).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not complete on a wrong division", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("collapse-orders");
-
-    await user.click(
-      screen.getByRole("button", { name: /collapse duplicates/i }),
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: /orderings\/team/i }),
-      "3",
-    );
-    await user.type(screen.getByRole("textbox", { name: /^teams$/i }), "4");
 
     expect(onComplete).not.toHaveBeenCalled();
   });
@@ -438,74 +430,164 @@ describe("handshake-party capstone", () => {
   });
 });
 
-describe("two-stories interaction", () => {
-  it("completes after building 3 scoops", async () => {
+describe("multiset-build interaction", () => {
+  it("completes after building a full cup of 3 scoops", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("two-stories");
+    const onComplete = renderSlide("multiset-build");
 
-    await user.click(screen.getByRole("button", { name: /vanilla/i }));
-    await user.click(screen.getByRole("button", { name: /choc/i }));
+    await user.click(screen.getByRole("button", { name: /add vanilla/i }));
+    await user.click(screen.getByRole("button", { name: /add choc/i }));
     expect(onComplete).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: /vanilla/i }));
+    await user.click(screen.getByRole("button", { name: /add vanilla/i }));
 
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 });
 
-describe("stars-bars interaction", () => {
-  it("completes after placing candies and identifying stars/bars", async () => {
+describe("multiset-distribute interaction", () => {
+  it("completes once both movable friends are seated in the line", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("stars-bars");
+    const onComplete = renderSlide("multiset-distribute");
 
-    // Place all 4 candies into Jar 1.
-    const jar1 = screen.getByRole("button", { name: /^Jar 1$/i });
-    for (let i = 0; i < 4; i++) await user.click(jar1);
-
-    await user.type(screen.getByRole("textbox", { name: /^stars$/i }), "4");
+    await user.click(screen.getByRole("button", { name: /place ben/i }));
+    await user.click(screen.getByRole("button", { name: /^position 1$/i }));
+    // Only one friend seated so far — not complete yet.
     expect(onComplete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: /place cam/i }));
+    await user.click(screen.getByRole("button", { name: /^position 4$/i }));
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/choice of spots/i)).toBeInTheDocument();
+  });
+
+  it("does not complete on mount or after seating only one friend", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("multiset-distribute");
+
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /place ben/i }));
+    await user.click(screen.getByRole("button", { name: /^position 3$/i }));
+
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe("multiset-stars-bars interaction", () => {
+  it("completes after the split and the combination count", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("multiset-stars-bars");
+
+    // The scoops/bars question only appears after both bars are placed.
+    await user.click(screen.getByRole("button", { name: /^location 2$/i }));
+    expect(
+      screen.queryByRole("textbox", { name: /^scoops$/i }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^location 5$/i }));
+
+    await user.type(screen.getByRole("textbox", { name: /^scoops$/i }), "4");
     await user.type(screen.getByRole("textbox", { name: /^bars$/i }), "2");
 
+    // The combination step appears; completion waits for C(6, 2).
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.type(
+      screen.getByRole("textbox", { name: /^total spots$/i }),
+      "6",
+    );
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.type(screen.getByRole("textbox", { name: /^wafers$/i }), "2");
+
     expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText(/towers result/i)).toHaveTextContent("15");
+  });
+
+  it("does not complete with a wrong split count", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("multiset-stars-bars");
+
+    await user.click(screen.getByRole("button", { name: /^location 1$/i }));
+    await user.click(screen.getByRole("button", { name: /^location 4$/i }));
+    await user.type(screen.getByRole("textbox", { name: /^scoops$/i }), "5");
+    await user.type(screen.getByRole("textbox", { name: /^bars$/i }), "2");
+
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });
 
-describe("stars-bars-formula interaction (tap to place)", () => {
-  async function tapTile(
-    user: ReturnType<typeof userEvent.setup>,
-    value: string,
-  ) {
-    const tiles = screen.getAllByRole("button", { name: `tile ${value}` });
-    await user.click(tiles[0]);
-  }
-
-  it("completes when C(k + n − 1, n − 1) is assembled", async () => {
+describe("multiset-formula interaction", () => {
+  it("completes after naming the pieces and filling the combination", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("stars-bars-formula");
+    const onComplete = renderSlide("multiset-formula");
 
-    // Slots fill left→right: s1(k) s2(n) s3(1) s4(n) s5(1).
-    for (const v of ["k", "n", "1", "n"]) await tapTile(user, v);
+    // The combination only appears once both pieces are named in variables.
+    await user.type(
+      screen.getByRole("textbox", { name: /scoops in variables/i }),
+      "k",
+    );
+    expect(
+      screen.queryByRole("textbox", { name: /combination first part/i }),
+    ).not.toBeInTheDocument();
+    await user.type(
+      screen.getByRole("textbox", { name: /wafers in variables/i }),
+      "n-1",
+    );
+
     expect(onComplete).not.toHaveBeenCalled();
-    await tapTile(user, "1");
+    await user.type(
+      screen.getByRole("textbox", { name: /combination first part/i }),
+      "k+n-1",
+    );
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.type(
+      screen.getByRole("textbox", { name: /combination second part/i }),
+      "n-1",
+    );
 
     expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/C\(6, 2\)/i)).toBeInTheDocument();
   });
 
-  it("shows 'Not quite' for a wrong build", async () => {
+  it("does not complete with a wrong combination", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("stars-bars-formula");
+    const onComplete = renderSlide("multiset-formula");
 
-    for (const v of ["k", "n", "2", "n", "1"]) await tapTile(user, v);
+    await user.type(
+      screen.getByRole("textbox", { name: /scoops in variables/i }),
+      "k",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /wafers in variables/i }),
+      "n-1",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /combination first part/i }),
+      "k+n",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /combination second part/i }),
+      "n-1",
+    );
 
     expect(onComplete).not.toHaveBeenCalled();
-    expect(screen.getByText("Not quite")).toBeInTheDocument();
   });
 });
 
-describe("donut-box capstone", () => {
-  it("completes when C(5,2) = 10 is entered (n=3, k=3)", async () => {
+describe("multiset-box capstone", () => {
+  it("completes after filling C(5, 2) = 10 (n=3, k=3)", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("donut-box");
+    const onComplete = renderSlide("multiset-box");
+
+    // The count box only appears once both combination args are correct.
+    await user.type(
+      screen.getByRole("textbox", { name: /combination top/i }),
+      "5",
+    );
+    expect(
+      screen.queryByRole("textbox", { name: /number of possible boxes/i }),
+    ).not.toBeInTheDocument();
+    await user.type(
+      screen.getByRole("textbox", { name: /combination bottom/i }),
+      "2",
+    );
 
     expect(onComplete).not.toHaveBeenCalled();
     await user.type(
@@ -519,8 +601,16 @@ describe("donut-box capstone", () => {
 
   it("does not complete on a wrong count", async () => {
     const user = userEvent.setup();
-    const onComplete = renderSlide("donut-box");
+    const onComplete = renderSlide("multiset-box");
 
+    await user.type(
+      screen.getByRole("textbox", { name: /combination top/i }),
+      "5",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /combination bottom/i }),
+      "2",
+    );
     await user.type(
       screen.getByRole("textbox", { name: /number of possible boxes/i }),
       "9",

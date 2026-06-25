@@ -1,6 +1,6 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, firebaseEnabled } from "../firebase";
-import type { ProgressMap, UserStats } from "../types";
+import type { ProgressMap, QuizResultMap, UserStats } from "../types";
 
 export const emptyStats: UserStats = {
   currentStreak: 0,
@@ -8,8 +8,9 @@ export const emptyStats: UserStats = {
   lessonsCompletedCount: 0,
 };
 
-type UserData = {
+export type UserData = {
   progress: ProgressMap;
+  quizzes: QuizResultMap;
   stats: UserStats;
 };
 
@@ -18,11 +19,18 @@ const localKey = (uid: string) => `cc_userdata_${uid}`;
 function readLocal(uid: string): UserData {
   try {
     const raw = localStorage.getItem(localKey(uid));
-    if (raw) return JSON.parse(raw) as UserData;
+    if (raw) {
+      const data = JSON.parse(raw) as Partial<UserData>;
+      return {
+        progress: data.progress ?? {},
+        quizzes: data.quizzes ?? {},
+        stats: data.stats ?? { ...emptyStats },
+      };
+    }
   } catch {
     /* ignore */
   }
-  return { progress: {}, stats: { ...emptyStats } };
+  return { progress: {}, quizzes: {}, stats: { ...emptyStats } };
 }
 
 function writeLocal(uid: string, data: UserData) {
@@ -37,10 +45,11 @@ export async function loadUserData(uid: string): Promise<UserData> {
       const data = snap.data() as Partial<UserData>;
       return {
         progress: data.progress ?? {},
+        quizzes: data.quizzes ?? {},
         stats: data.stats ?? { ...emptyStats },
       };
     }
-    return { progress: {}, stats: { ...emptyStats } };
+    return { progress: {}, quizzes: {}, stats: { ...emptyStats } };
   }
   return readLocal(uid);
 }

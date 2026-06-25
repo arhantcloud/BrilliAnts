@@ -2,31 +2,26 @@ import type { ComponentType } from "react";
 import type { CustomSlide } from "../../../types";
 import FourWorldsMap from "./FourWorldsMap";
 import ClassifyExamples from "./ClassifyExamples";
-import PizzaClassify from "./PizzaClassify";
+import ConnectCategories from "./ConnectCategories";
 import ReviewMap from "./ReviewMap";
 import FillSeats from "./FillSeats";
 import BuildPodium from "./BuildPodium";
 import Factorials from "./Factorials";
 import PermuteK from "./PermuteK";
 import PermutationFormula from "./PermutationFormula";
-import BooksMcq from "./BooksMcq";
 import RefillChoices from "./RefillChoices";
-import BuildFlips from "./BuildFlips";
 import PowerExplorer from "./PowerExplorer";
 import ReuseCompare from "./ReuseCompare";
-import PinMcq from "./PinMcq";
 import CrackTheCode from "./CrackTheCode";
-import CollapseOrders from "./CollapseOrders";
 import SelectTeam from "./SelectTeam";
+import CollapseOrderings from "./CollapseOrderings";
 import CombinationFormula from "./CombinationFormula";
-import CardsMcq from "./CardsMcq";
 import HandshakeParty from "./HandshakeParty";
-import TwoStories from "./TwoStories";
-import StarsBars from "./StarsBars";
-import StarsBarsFormula from "./StarsBarsFormula";
-import DistributeBuild from "./DistributeBuild";
-import MultisetMcq from "./MultisetMcq";
-import DonutBox from "./DonutBox";
+import MultisetBuild from "./MultisetBuild";
+import MultisetDistribute from "./MultisetDistribute";
+import MultisetStarsBars from "./MultisetStarsBars";
+import MultisetFormula from "./MultisetFormula";
+import MultisetBox from "./MultisetBox";
 
 /** Props every custom slide component receives. */
 export type CustomSlideProps = {
@@ -44,32 +39,27 @@ export const customSlideRegistry: Record<
 > = {
   "four-worlds-map": FourWorldsMap,
   "classify-examples": ClassifyExamples,
-  "pizza-classify": PizzaClassify,
+  "connect-categories": ConnectCategories,
   "review-map": ReviewMap,
   "fill-seats": FillSeats,
   "build-podium": BuildPodium,
   "factorials": Factorials,
   "permute-k": PermuteK,
   "permutation-formula": PermutationFormula,
-  "books-mcq": BooksMcq,
   // Lesson 3 — Order matters, with reuse (nᵏ)
   "refill-choices": RefillChoices,
-  "build-flips": BuildFlips,
   "power-explorer": PowerExplorer,
   "reuse-compare": ReuseCompare,
-  "pin-mcq": PinMcq,
   "crack-the-code": CrackTheCode,
   // Lesson 4 — Order doesn't matter, no reuse (combinations)
-  "collapse-orders": CollapseOrders,
   "select-team": SelectTeam,
+  "collapse-orderings": CollapseOrderings,
   "combination-formula": CombinationFormula,
-  "cards-mcq": CardsMcq,
   "handshake-party": HandshakeParty,
-  // Lesson 5 — Multisets / stars and bars
-  "two-stories": TwoStories,
-  "stars-bars": StarsBars,
-  "stars-bars-formula": StarsBarsFormula,
-  "distribute-build": DistributeBuild,
-  "multiset-mcq": MultisetMcq,
-  "donut-box": DonutBox,
+  // Lesson 5 — Order doesn't matter, with reuse (multisets / stars and bars)
+  "multiset-build": MultisetBuild,
+  "multiset-distribute": MultisetDistribute,
+  "multiset-stars-bars": MultisetStarsBars,
+  "multiset-formula": MultisetFormula,
+  "multiset-box": MultisetBox,
 };

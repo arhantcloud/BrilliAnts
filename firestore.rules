@@ -3,7 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // The app stores all learner state in a single document per user:
-    //   users/{uid} = { progress: { [lessonId]: LessonProgress }, stats: UserStats }
+    //   users/{uid} = {
+    //     progress: { [lessonId]: LessonProgress },
+    //     quizzes:  { [lessonId]: QuizResult },
+    //     stats:    UserStats,
+    //   }
     // (see src/data/persistence.ts and src/types.ts)
 
     function isOwner(uid) {
@@ -21,12 +25,19 @@ service cloud.firestore {
         && s.lessonsCompletedCount <= 100000;
     }
 
+    // Validates the quizzes map of lessonId -> QuizResult.
+    function isValidQuizzes(q) {
+      // Cap collection size to prevent storage abuse / DoS.
+      return q is map && q.size() <= 200;
+    }
+
     // Validates the resulting user document (works for create and merge-update,
     // since request.resource.data is the full post-write document).
     function isValidUserDoc(data) {
-      return data.keys().hasOnly(['progress', 'stats'])
+      return data.keys().hasOnly(['progress', 'quizzes', 'stats'])
         // Cap collection size to prevent storage abuse / DoS.
         && (!('progress' in data) || (data.progress is map && data.progress.size() <= 200))
+        && (!('quizzes' in data) || isValidQuizzes(data.quizzes))
         && (!('stats' in data) || isValidStats(data.stats));
     }
 

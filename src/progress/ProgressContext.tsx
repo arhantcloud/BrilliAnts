@@ -1,45 +1,28 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/auth-context";
 import { course } from "../content/course";
-import {
-  emptyStats,
-  loadUserData,
-  saveUserData,
-} from "../data/persistence";
+import { getLessonQuiz } from "../content/quizzes";
+import { emptyStats, loadUserData, saveUserData } from "../data/persistence";
 import type {
   LessonProgress,
   LessonStatus,
   ProgressMap,
+  QuizResult,
+  QuizResultMap,
+  QuizStatus,
   UserStats,
 } from "../types";
-
-type ProgressContextValue = {
-  loading: boolean;
-  progress: ProgressMap;
-  stats: UserStats;
-  lessonStatus: (lessonId: string) => LessonStatus;
-  resumeIndex: (lessonId: string) => number;
-  /** Mark a slide complete; advances resume point and handles lesson completion. */
-  completeSlide: (
-    lessonId: string,
-    slideIndex: number,
-    totalSlides: number,
-  ) => void;
-  completedCount: number;
-  totalLessons: number;
-};
-
-const ProgressContext = createContext<ProgressContextValue | undefined>(
-  undefined,
-);
+import {
+  PASS_THRESHOLD,
+  ProgressContext,
+  type ProgressContextValue,
+} from "./progress-context";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -62,27 +45,51 @@ function bumpStreak(stats: UserStats): UserStats {
   return { ...stats, currentStreak: streak, lastActiveDate: today };
 }
 
+/** Best-score percentage (0-100) for a quiz result, or 0 when unattempted. */
+function bestPercent(result: QuizResult | undefined): number {
+  if (!result || result.total <= 0) return 0;
+  return (result.bestCorrect / result.total) * 100;
+}
+
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<ProgressMap>({});
+  const [quizzes, setQuizzes] = useState<QuizResultMap>({});
   const [stats, setStats] = useState<UserStats>({ ...emptyStats });
   const uidRef = useRef<string | null>(null);
 
+  // Mirror the latest state so persist() can always write a consistent, full
+  // snapshot even when only one slice changed.
+  const progressRef = useRef<ProgressMap>(progress);
+  const quizzesRef = useRef<QuizResultMap>(quizzes);
+  const statsRef = useRef<UserStats>(stats);
+  // Keep the mirrors in sync after each commit so persist() can always read the
+  // latest full snapshot. (Done in an effect, not during render, so we never
+  // mutate a ref while rendering.)
+  useEffect(() => {
+    progressRef.current = progress;
+    quizzesRef.current = quizzes;
+    statsRef.current = stats;
+  }, [progress, quizzes, stats]);
+
   useEffect(() => {
     let active = true;
-    if (!user) {
-      setProgress({});
-      setStats({ ...emptyStats });
-      setLoading(false);
-      uidRef.current = null;
-      return;
-    }
-    setLoading(true);
-    uidRef.current = user.uid;
-    loadUserData(user.uid).then((data) => {
+    uidRef.current = user?.uid ?? null;
+    // Treat "no user" as an immediately-resolved empty load so that every
+    // state update happens inside the async callback (never synchronously in
+    // the effect body).
+    const load = user
+      ? loadUserData(user.uid)
+      : Promise.resolve({
+          progress: {} as ProgressMap,
+          quizzes: {} as QuizResultMap,
+          stats: { ...emptyStats },
+        });
+    load.then((data) => {
       if (!active) return;
       setProgress(data.progress);
+      setQuizzes(data.quizzes);
       setStats(data.stats);
       setLoading(false);
     });
@@ -92,10 +99,18 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const persist = useCallback(
-    (nextProgress: ProgressMap, nextStats: UserStats) => {
+    (
+      nextProgress: ProgressMap,
+      nextQuizzes: QuizResultMap,
+      nextStats: UserStats,
+    ) => {
       const uid = uidRef.current;
       if (!uid) return;
-      void saveUserData(uid, { progress: nextProgress, stats: nextStats });
+      void saveUserData(uid, {
+        progress: nextProgress,
+        quizzes: nextQuizzes,
+        stats: nextStats,
+      });
     },
     [],
   );
@@ -106,13 +121,21 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       if (index < 0) return "locked";
       const own = progress[lessonId];
       if (own?.status === "completed") return "completed";
-      const unlocked =
-        index === 0 ||
-        progress[course.lessons[index - 1].id]?.status === "completed";
+      const prevLesson = index > 0 ? course.lessons[index - 1] : null;
+      const prevCompleted =
+        prevLesson != null &&
+        progress[prevLesson.id]?.status === "completed";
+      // A lesson without a quiz only needs to be completed to open the next one;
+      // a lesson with a quiz also requires passing it.
+      const prevQuizOk =
+        prevLesson != null &&
+        (getLessonQuiz(prevLesson.id) == null ||
+          bestPercent(quizzes[prevLesson.id]) >= PASS_THRESHOLD);
+      const unlocked = index === 0 || (prevCompleted && prevQuizOk);
       if (!unlocked) return "locked";
       return own?.status === "in_progress" ? "in_progress" : "available";
     },
-    [progress],
+    [progress, quizzes],
   );
 
   const resumeIndex = useCallback(
@@ -149,7 +172,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
               lessonsCompletedCount: nextStats.lessonsCompletedCount + 1,
             };
           }
-          persist(nextProgress, nextStats);
+          persist(nextProgress, quizzesRef.current, nextStats);
           return nextStats;
         });
 
@@ -159,19 +182,83 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  const quizResult = useCallback(
+    (lessonId: string): QuizResult | undefined => quizzes[lessonId],
+    [quizzes],
+  );
+
+  const quizStatus = useCallback(
+    (lessonId: string): QuizStatus => {
+      // Lessons without a quiz never expose one.
+      if (getLessonQuiz(lessonId) == null) return "locked";
+      if (progress[lessonId]?.status !== "completed") return "locked";
+      const result = quizzes[lessonId];
+      if (!result || result.attempts <= 0) return "available";
+      return bestPercent(result) >= PASS_THRESHOLD ? "passed" : "failed";
+    },
+    [progress, quizzes],
+  );
+
+  const recordQuizAttempt = useCallback(
+    (lessonId: string, correct: number, total: number) => {
+      setQuizzes((prevQuizzes) => {
+        const prev = prevQuizzes[lessonId];
+        const prevPct = bestPercent(prev);
+        const attemptPct = total > 0 ? (correct / total) * 100 : 0;
+        const keepPrevBest = prev != null && prevPct >= attemptPct;
+        const entry: QuizResult = {
+          bestCorrect: keepPrevBest ? prev.bestCorrect : correct,
+          total: keepPrevBest ? prev.total : total,
+          attempts: (prev?.attempts ?? 0) + 1,
+          updatedAt: Date.now(),
+        };
+        const nextQuizzes: QuizResultMap = {
+          ...prevQuizzes,
+          [lessonId]: entry,
+        };
+
+        setStats((prevStats) => {
+          const nextStats = bumpStreak(prevStats);
+          persist(progressRef.current, nextQuizzes, nextStats);
+          return nextStats;
+        });
+
+        return nextQuizzes;
+      });
+    },
+    [persist],
+  );
+
   const completedCount = course.lessons.filter(
     (l) => progress[l.id]?.status === "completed",
   ).length;
 
+  // Only lessons that actually have a quiz contribute to the course-wide points.
+  const quizPointsEarned = course.lessons.reduce(
+    (sum, l) =>
+      sum + (getLessonQuiz(l.id) ? (quizzes[l.id]?.bestCorrect ?? 0) : 0),
+    0,
+  );
+  const quizPointsTotal = course.lessons.reduce(
+    (sum, l) => sum + (getLessonQuiz(l.id)?.questionCount ?? 0),
+    0,
+  );
+
   const value: ProgressContextValue = {
     loading,
     progress,
+    quizzes,
     stats,
     lessonStatus,
     resumeIndex,
     completeSlide,
+    quizResult,
+    quizStatus,
+    recordQuizAttempt,
     completedCount,
     totalLessons: course.lessons.length,
+    quizPointsEarned,
+    quizPointsTotal,
   };
 
   return (
@@ -179,10 +266,4 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       {children}
     </ProgressContext.Provider>
   );
-}
-
-export function useProgress(): ProgressContextValue {
-  const ctx = useContext(ProgressContext);
-  if (!ctx) throw new Error("useProgress must be used within ProgressProvider");
-  return ctx;
 }

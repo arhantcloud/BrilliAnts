@@ -28,8 +28,8 @@ export const course: Course = {
         {
           id: "l1-s3",
           type: "custom",
-          component: "pizza-classify",
-          title: "Build-your-own pizza",
+          component: "connect-categories",
+          title: "Match the four kinds",
         },
         {
           id: "l1-s4",
@@ -118,23 +118,23 @@ export const course: Course = {
         {
           id: "l4-s1",
           type: "custom",
-          component: "collapse-orders",
-          title: "When order stops mattering",
+          component: "select-team",
+          title: "Pick a team, then order it",
+        },
+        {
+          id: "l4-collapse",
+          type: "custom",
+          component: "collapse-orderings",
+          title: "Collapse the orderings",
         },
         {
           id: "l4-s2",
-          type: "custom",
-          component: "select-team",
-          title: "Pick the team",
-        },
-        {
-          id: "l4-s3",
           type: "custom",
           component: "combination-formula",
           title: "Divide out the orderings",
         },
         {
-          id: "l4-s4",
+          id: "l4-s3",
           type: "custom",
           component: "handshake-party",
           title: "The handshake party",
@@ -143,33 +143,39 @@ export const course: Course = {
     },
     {
       id: "l5-choice-distribution",
-      title: "Choice vs. Distribution",
+      title: "Order Doesn't Matter, With Reuse",
       summary:
-        "The big connection: choosing items and distributing items count the same things.",
+        "Multisets: choosing a group when repeats are allowed and order is ignored.",
       estimatedMinutes: 6,
       slides: [
         {
           id: "l5-s1",
           type: "custom",
-          component: "two-stories",
-          title: "Two stories, one count",
+          component: "multiset-build",
+          title: "Scoops in a cup",
         },
         {
           id: "l5-s2",
           type: "custom",
-          component: "stars-bars",
-          title: "Stars and bars",
+          component: "multiset-distribute",
+          title: "Distributing is choosing",
         },
         {
           id: "l5-s3",
           type: "custom",
-          component: "stars-bars-formula",
-          title: "The stars-and-bars formula",
+          component: "multiset-stars-bars",
+          title: "Split the tower",
         },
         {
           id: "l5-s4",
           type: "custom",
-          component: "donut-box",
+          component: "multiset-formula",
+          title: "The multiset formula",
+        },
+        {
+          id: "l5-s5",
+          type: "custom",
+          component: "multiset-box",
           title: "The donut box",
         },
       ],
