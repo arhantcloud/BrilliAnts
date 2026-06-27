@@ -7,8 +7,8 @@ type Sym = { id: string; label: string; color: string };
 const SYMBOLS: Sym[] = [
   { id: "star", label: "★", color: "bg-amber-400" },
   { id: "heart", label: "♥", color: "bg-rose-400" },
-  { id: "moon", label: "☾", color: "bg-sky-400" },
-  { id: "bolt", label: "⚡", color: "bg-violet-400" },
+  { id: "moon", label: "☾", color: "bg-brand-400" },
+  { id: "bolt", label: "⚡", color: "bg-umber-400" },
 ];
 
 const N = SYMBOLS.length;
@@ -47,19 +47,19 @@ export default function RefillChoices({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Choices that don't run out"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         <b>How many possible passcodes are there?</b> Build a 3-symbol passcode
-        from these 4 symbols. You can reuse a symbol — so every slot still has{" "}
+        from these 4 symbols. You can reuse a symbol, so every slot still has{" "}
         <b>all {N}</b> choices. Tap the keypad.
       </p>
 
       {/* Keypad device */}
-      <div className="mx-auto mt-5 w-full max-w-[300px] rounded-3xl bg-gradient-to-b from-slate-700 to-slate-900 p-4 shadow-2xl ring-1 ring-black/20">
+      <div className="mx-auto mt-5 w-full max-w-[300px] rounded-3xl bg-gradient-to-b from-stone-700 to-stone-900 p-4 shadow-2xl ring-1 ring-black/20">
         <div className="mb-3 flex items-center justify-between px-1">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
             Enter code
           </span>
-          <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+          <span className="flex items-center gap-1 text-[10px] font-bold text-stone-400">
             <span
               className={`h-2 w-2 rounded-full ${
                 done ? "bg-emerald-400" : "animate-pulse bg-amber-400"
@@ -70,7 +70,7 @@ export default function RefillChoices({ slide, onComplete }: CustomSlideProps) {
         </div>
 
         {/* Passcode display (LCD) */}
-        <div className="rounded-2xl bg-slate-950 p-3 shadow-inner ring-1 ring-white/5">
+        <div className="rounded-2xl bg-stone-950 p-3 shadow-inner ring-1 ring-white/5">
           <div className="flex items-center justify-center gap-3">
             {slots.map((id, i) => {
               const active = i === activeIndex;
@@ -81,8 +81,8 @@ export default function RefillChoices({ slide, onComplete }: CustomSlideProps) {
                     id
                       ? `text-white shadow-lg ${sym(id).color}`
                       : active
-                        ? "bg-slate-800 ring-2 ring-brand-400"
-                        : "bg-slate-900 ring-1 ring-slate-700"
+                        ? "bg-stone-800 ring-2 ring-brand-400"
+                        : "bg-stone-900 ring-1 ring-stone-700"
                   }`}
                 >
                   {id ? (
@@ -92,7 +92,7 @@ export default function RefillChoices({ slide, onComplete }: CustomSlideProps) {
                   ) : (
                     <span
                       className={`text-lg ${
-                        active ? "animate-pulse text-brand-300" : "text-slate-600"
+                        active ? "animate-pulse text-brand-300" : "text-stone-600"
                       }`}
                     >
                       ●
@@ -109,7 +109,7 @@ export default function RefillChoices({ slide, onComplete }: CustomSlideProps) {
           )}
         </div>
 
-        {/* Keypad — always full (reuse allowed) */}
+        {/* Keypad: always full (reuse allowed) */}
         <div className="mt-4 grid grid-cols-2 gap-2.5">
           {SYMBOLS.map((s) => (
             <button
@@ -126,19 +126,19 @@ export default function RefillChoices({ slide, onComplete }: CustomSlideProps) {
 
       <Readout>
         {filledCount === 0 ? (
-          <p className="text-sm text-slate-400">
-            Each slot has {N} choices — and it stays {N} even after you pick.
+          <p className="text-sm text-stone-400">
+            Each slot has {N} choices, and it stays {N} even after you pick.
           </p>
         ) : (
           <>
             <p className="text-2xl font-extrabold tracking-wide">
               {Array(filledCount).fill(N).join(" × ")}
-              {!done && <span className="text-slate-500"> × …</span>}
+              {!done && <span className="text-stone-500"> × …</span>}
               {done && <span className="text-brand-300"> = {N ** SLOTS}</span>}
             </p>
-            <p className="mt-2 text-[13px] text-slate-300">
+            <p className="mt-2 text-[13px] text-stone-300">
               {done
-                ? `${N ** SLOTS} possible passcodes — the pool stayed full the whole time.`
+                ? `${N ** SLOTS} possible passcodes, the pool stayed full the whole time.`
                 : `The pool never shrinks: still ${N} choices for the next slot.`}
             </p>
           </>

@@ -38,7 +38,7 @@ const CELLS = {
 export default function FourWorldsMap({ slide, onComplete }: CustomSlideProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
 
-  // Light interaction only — no correctness gate. Allow advancing immediately.
+  // Light interaction only, no correctness gate. Allow advancing immediately.
   useEffect(() => {
     onComplete();
   }, [onComplete]);
@@ -57,7 +57,7 @@ export default function FourWorldsMap({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "The four kinds of counting"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Every counting problem is decided by two questions. Tap a label to see
         what it means.
       </p>
@@ -136,7 +136,7 @@ function AxisButton({
       className={`flex items-center justify-center rounded-xl border-2 px-2 py-2.5 text-center text-xs font-bold leading-tight transition active:scale-[0.97] ${
         active
           ? "border-brand-500 bg-brand-500 text-white"
-          : "border-slate-200 bg-white text-slate-600 hover:border-brand-300"
+          : "border-stone-200 bg-white text-stone-600 hover:border-brand-300"
       }`}
     >
       {label}
@@ -156,19 +156,19 @@ function Cell({
       className={`flex items-center justify-center rounded-xl border-2 px-2 py-4 text-center transition ${
         highlighted
           ? "border-brand-300 bg-brand-50"
-          : "border-slate-100 bg-slate-50"
+          : "border-stone-100 bg-stone-50"
       }`}
     >
-      <span className="text-[13px] font-bold text-slate-800">{cell.name}</span>
+      <span className="text-[13px] font-bold text-stone-800">{cell.name}</span>
     </div>
   );
 }
 
 function ExamplePanel({ selection }: { selection: Selection | null }) {
   return (
-    <div className="mt-5 min-h-[148px] rounded-2xl bg-slate-900 p-5 text-white">
+    <div className="mt-5 min-h-[148px] rounded-2xl bg-stone-900 p-5 text-white">
       {!selection ? (
-        <div className="flex h-[108px] items-center justify-center text-center text-sm text-slate-400">
+        <div className="flex h-[108px] items-center justify-center text-center text-sm text-stone-400">
           Tap a label above to see an example.
         </div>
       ) : (
@@ -194,12 +194,12 @@ function OrderExample({ value }: { value: "matters" | "ignored" }) {
       </p>
       <div className="mt-3 flex items-center justify-center gap-4">
         <ShapeRow shapes={["triangle", "circle", "square"]} />
-        <span className="text-2xl font-extrabold text-slate-300">
+        <span className="text-2xl font-extrabold text-stone-300">
           {matters ? "≠" : "="}
         </span>
         <ShapeRow shapes={["circle", "square", "triangle"]} />
       </div>
-      <p className="mt-3 text-center text-[13px] text-slate-300">
+      <p className="mt-3 text-center text-[13px] text-stone-300">
         {matters
           ? "Rearrange the same items and it counts as a different outcome."
           : "Same items in any order count as the same outcome."}
@@ -231,10 +231,10 @@ function ReplacementExample({ value }: { value: "with" | "no" }) {
           </>
         )}
       </div>
-      <p className="mt-3 text-center text-[13px] text-slate-300">
+      <p className="mt-3 text-center text-[13px] text-stone-300">
         {withRep
-          ? "The pool never runs out — use the same item as often as you like."
-          : "Once an item is used, it's gone — every pick is different."}
+          ? "The pool never runs out, use the same item as often as you like."
+          : "Once an item is used, it's gone, every pick is different."}
       </p>
     </div>
   );

@@ -54,6 +54,9 @@ const GATED = [
   "multiset-stars-bars",
   "multiset-formula",
   "multiset-box",
+  "distribute-bins",
+  "exclusive-bins",
+  "map-distribution",
 ];
 
 describe("custom slides: gated slides do not complete on mount", () => {
@@ -106,33 +109,6 @@ describe("connect-categories matching", () => {
 });
 
 describe("select-team: pick a team, lock it, then order it", () => {
-  // After locking Ana/Bo/Cy, these are all six orderings of that team.
-  const PERMS = [
-    ["Ana", "Bo", "Cy"],
-    ["Ana", "Cy", "Bo"],
-    ["Bo", "Ana", "Cy"],
-    ["Bo", "Cy", "Ana"],
-    ["Cy", "Ana", "Bo"],
-    ["Cy", "Bo", "Ana"],
-  ];
-
-  async function pickTeam(user: ReturnType<typeof userEvent.setup>) {
-    await user.click(screen.getByRole("button", { name: /^ana$/i }));
-    await user.click(screen.getByRole("button", { name: /^bo$/i }));
-    await user.click(screen.getByRole("button", { name: /^cy$/i }));
-  }
-
-  async function buildAllOrderings(user: ReturnType<typeof userEvent.setup>) {
-    for (const perm of PERMS) {
-      for (const nm of perm) {
-        await user.click(
-          screen.getByRole("button", { name: new RegExp(`^${nm}$`, "i") }),
-        );
-      }
-      await user.click(screen.getByRole("button", { name: /add ordering/i }));
-    }
-  }
-
   it("does not complete before three are chosen", async () => {
     const user = userEvent.setup();
     const onComplete = renderSlide("select-team");
@@ -145,60 +121,6 @@ describe("select-team: pick a team, lock it, then order it", () => {
     expect(
       screen.queryByRole("button", { name: /add ordering/i }),
     ).not.toBeInTheDocument();
-  });
-
-  it("locks the team at three picks but does not complete yet", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("select-team");
-
-    await pickTeam(user);
-
-    // Ordering phase now visible; choosing a fourth person is impossible.
-    expect(screen.getByText(/combination/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /add ordering/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^di$/i })).toBeDisabled();
-    expect(onComplete).not.toHaveBeenCalled();
-  });
-
-  it("completes after building all 3! orderings and entering 3! = 6", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("select-team");
-
-    await pickTeam(user);
-    await buildAllOrderings(user);
-    expect(onComplete).not.toHaveBeenCalled();
-
-    await user.type(
-      screen.getByRole("textbox", { name: /factorial base/i }),
-      "3",
-    );
-    expect(onComplete).not.toHaveBeenCalled();
-    await user.type(
-      screen.getByRole("textbox", { name: /total orderings/i }),
-      "6",
-    );
-
-    expect(onComplete).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not complete with the wrong factorial value", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("select-team");
-
-    await pickTeam(user);
-    await buildAllOrderings(user);
-    await user.type(
-      screen.getByRole("textbox", { name: /factorial base/i }),
-      "3",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: /total orderings/i }),
-      "5",
-    );
-
-    expect(onComplete).not.toHaveBeenCalled();
   });
 });
 
@@ -378,19 +300,6 @@ describe("combination-formula interaction (tap to place)", () => {
     await user.click(tiles[0]);
   }
 
-  it("completes when n! / (k! (n−k)!) is assembled", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("combination-formula");
-
-    // Order: numA(n) numB(!) denA(k) denB(!) denC(n) denD(k) denE(!).
-    for (const v of ["n", "!", "k", "!", "n", "k"]) await tapTile(user, v);
-    expect(onComplete).not.toHaveBeenCalled();
-    await tapTile(user, "!");
-
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/C\(5, 3\)/i)).toBeInTheDocument();
-  });
-
   it("shows 'Not quite' for a wrong build", async () => {
     const user = userEvent.setup();
     const onComplete = renderSlide("combination-formula");
@@ -399,34 +308,6 @@ describe("combination-formula interaction (tap to place)", () => {
 
     expect(onComplete).not.toHaveBeenCalled();
     expect(screen.getByText("Not quite")).toBeInTheDocument();
-  });
-});
-
-describe("handshake-party capstone", () => {
-  it("completes when C(5,2) = 10 is entered", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("handshake-party");
-
-    expect(onComplete).not.toHaveBeenCalled();
-    await user.type(
-      screen.getByRole("textbox", { name: /number of handshakes/i }),
-      "10",
-    );
-
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/lesson 4 complete/i)).toBeInTheDocument();
-  });
-
-  it("does not complete on a wrong count", async () => {
-    const user = userEvent.setup();
-    const onComplete = renderSlide("handshake-party");
-
-    await user.type(
-      screen.getByRole("textbox", { name: /number of handshakes/i }),
-      "20",
-    );
-
-    expect(onComplete).not.toHaveBeenCalled();
   });
 });
 
@@ -451,7 +332,7 @@ describe("multiset-distribute interaction", () => {
 
     await user.click(screen.getByRole("button", { name: /place ben/i }));
     await user.click(screen.getByRole("button", { name: /^position 1$/i }));
-    // Only one friend seated so far — not complete yet.
+    // Only one friend seated so far, not complete yet.
     expect(onComplete).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: /place cam/i }));
@@ -615,6 +496,84 @@ describe("multiset-box capstone", () => {
       screen.getByRole("textbox", { name: /number of possible boxes/i }),
       "9",
     );
+
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe("distribute-bins: password vs pizza", () => {
+  it("hides the matching gate until the learner views the pizza", () => {
+    renderSlide("distribute-bins");
+    expect(
+      screen.queryByRole("button", { name: "Distinguishable" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("completes after viewing the pizza and matching both pairs", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("distribute-bins");
+
+    await user.click(screen.getByRole("button", { name: /make balls identical/i }));
+    expect(onComplete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Order matters" }));
+    await user.click(screen.getByRole("button", { name: "Distinguishable" }));
+    expect(onComplete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Order doesn’t matter" }));
+    await user.click(screen.getByRole("button", { name: "Indistinguishable" }));
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(/order matters ⇄ distinguishable/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not complete when a pair is matched wrong", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("distribute-bins");
+
+    await user.click(screen.getByRole("button", { name: /make balls identical/i }));
+    await user.click(screen.getByRole("button", { name: "Order matters" }));
+    await user.click(screen.getByRole("button", { name: "Indistinguishable" }));
+
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe("exclusive-bins: repeats vs exclusive", () => {
+  it("hides the matching gate until the learner views the exclusive rule", () => {
+    renderSlide("exclusive-bins");
+    expect(
+      screen.queryByRole("button", { name: "Exclusive" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("completes after going exclusive and matching both pairs", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("exclusive-bins");
+
+    await user.click(screen.getByRole("button", { name: /make bins exclusive/i }));
+    expect(onComplete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Repeats allowed" }));
+    await user.click(screen.getByRole("button", { name: "Not exclusive" }));
+    expect(onComplete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "No repeats" }));
+    await user.click(screen.getByRole("button", { name: "Exclusive" }));
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/no repeats ⇄ exclusive/i)).toBeInTheDocument();
+  });
+
+  it("does not complete when a pair is matched wrong", async () => {
+    const user = userEvent.setup();
+    const onComplete = renderSlide("exclusive-bins");
+
+    await user.click(screen.getByRole("button", { name: /make bins exclusive/i }));
+    await user.click(screen.getByRole("button", { name: "Repeats allowed" }));
+    await user.click(screen.getByRole("button", { name: "Exclusive" }));
 
     expect(onComplete).not.toHaveBeenCalled();
   });

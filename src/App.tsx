@@ -4,11 +4,13 @@ import Login from "./pages/Login";
 import CoursePath from "./pages/CoursePath";
 import LessonPlayer from "./pages/LessonPlayer";
 import QuizPlayer from "./pages/QuizPlayer";
+import AntColony from "./pages/AntColony";
+import AntMascot from "./mascot/AntMascot";
 import type { ReactNode } from "react";
 
 function FullScreenLoader() {
   return (
-    <div className="flex h-full items-center justify-center text-slate-400">
+    <div className="flex h-full items-center justify-center text-stone-400">
       Loading...
     </div>
   );
@@ -40,7 +42,7 @@ export default function App() {
   const { user, loading } = useAuth();
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#f6f8fb]">
+    <div className="flex h-full w-full flex-col bg-[#f7f1ea]">
       <Routes>
         <Route
           path="/login"
@@ -78,8 +80,17 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route
+          path="/colony"
+          element={
+            <RequireAuth>
+              <AntColony />
+            </RequireAuth>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {user && <AntMascot />}
     </div>
   );
 }

@@ -60,7 +60,7 @@ export type UserStats = {
  * Templates (src/quiz/templates/**) build one of these per slot of an attempt:
  * `params` holds the randomized numbers/strings the question view renders, and
  * `answer` is the expected (clean) value the learner must produce. The view in
- * QuizQuestionSpec consumes this shape — it is interactive, not multiple-choice.
+ * QuizQuestionSpec consumes this shape, which is interactive, not multiple-choice.
  */
 export type GeneratedQuestion = {
   /** Randomized inputs the question view renders (numbers and/or labels). */
@@ -105,6 +105,42 @@ export type QuizResult = {
 
 /** Map of lessonId -> best quiz result. */
 export type QuizResultMap = Record<string, QuizResult>;
+
+/**
+ * A stored quiz mistake, one per wrong question of a lesson's best attempt.
+ * Rendered as an "ant" in the Ant Colony; clearing it recovers one quiz point.
+ * The question *type* (template id + optional style variant) lets the colony
+ * generate fresh practice questions, while the optional `params`/`answer` snapshot
+ * the exact missed instance so the "Spot the Slip" critique can build a wrong
+ * example targeting that specific problem. Both are optional for backward
+ * compatibility with ants stored before this snapshot was captured.
+ */
+export type Mistake = {
+  id: string;
+  lessonId: string;
+  /** Quiz template id (src/quiz/registry.ts), e.g. "permutation". */
+  templateId: string;
+  /** Optional style variant index (e.g. permutation's cross-out/fill/product). */
+  style?: number;
+  /** The randomized inputs of the exact question the learner missed. */
+  params?: Record<string, number | string>;
+  /** The correct answer to the exact question the learner missed. */
+  answer?: number | string;
+  createdAt: number;
+};
+
+/** Map of lessonId -> outstanding mistakes (ants) for that lesson. */
+export type MistakeMap = Record<string, Mistake[]>;
+
+/** Minimal descriptor of a wrong question captured during a quiz attempt. */
+export type WrongQuestion = {
+  templateId: string;
+  style?: number;
+  /** The randomized inputs of the missed question (for the critique example). */
+  params?: Record<string, number | string>;
+  /** The correct answer to the missed question. */
+  answer?: number | string;
+};
 
 /** Status of a lesson's post-lesson quiz, derived from progress + results. */
 export type QuizStatus = "locked" | "available" | "failed" | "passed";

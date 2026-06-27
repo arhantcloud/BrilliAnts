@@ -6,7 +6,7 @@ import type { Rng } from "./rng";
  * Props every quiz question view receives from the QuizPlayer.
  *
  * The view renders the interactive (non-MCQ) problem from `question.params`,
- * owns its own input + Submit, and — once the learner submits — locks itself,
+ * owns its own input + Submit, and once the learner submits it locks itself,
  * reveals right/wrong against `question.answer`, and calls `onResult(correct)`
  * exactly once. `locked` is also driven by the player so a question never
  * accepts a second answer after the run has moved on.

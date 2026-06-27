@@ -96,9 +96,9 @@ export default function PermuteK({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Pick k of n"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Out of <b>{n}</b> race cars, how many possible podiums are there for the
-        top <b>{k}</b> finishers — picking <b>{k}</b> of <b>{n}</b>?
+        top <b>{k}</b> finishers, picking <b>{k}</b> of <b>{n}</b>?
       </p>
 
       {/* Two steppers: cars and podium spots. */}
@@ -108,8 +108,8 @@ export default function PermuteK({ slide, onComplete }: CustomSlideProps) {
       </div>
 
       {/* Full factorial chain inside a colored "total" box; tail cut off after k. */}
-      <div className="mt-6 rounded-2xl border-2 border-sky-300 bg-sky-50 p-4">
-        <div className="mb-3 inline-block rounded-full bg-sky-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sky-700">
+      <div className="mt-6 rounded-2xl border-2 border-brand-300 bg-brand-50 p-4">
+        <div className="mb-3 inline-block rounded-full bg-brand-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-brand-700">
           total
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-3">
@@ -146,12 +146,12 @@ export default function PermuteK({ slide, onComplete }: CustomSlideProps) {
         <span className="text-rose-400">● cut tail</span>
       </div>
 
-      {/* Division readout — fill in the numbers in front of each factorial,
+      {/* Division readout: fill in the numbers in front of each factorial,
           and what the whole thing equals. */}
-      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-white">
+      <div className="mt-5 rounded-2xl bg-stone-900 p-5 text-white">
         <div className="flex flex-wrap items-end justify-center gap-2">
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-sky-300">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-brand-300">
               total
             </span>
             <div className="flex items-end gap-1.5">
@@ -169,7 +169,7 @@ export default function PermuteK({ slide, onComplete }: CustomSlideProps) {
             </div>
           </div>
 
-          <span className="pb-2 text-3xl font-extrabold text-slate-500">÷</span>
+          <span className="pb-2 text-3xl font-extrabold text-stone-500">÷</span>
 
           <div className="flex flex-col items-center gap-1">
             <span className="text-[11px] font-bold uppercase tracking-wide text-rose-300">
@@ -209,9 +209,9 @@ export default function PermuteK({ slide, onComplete }: CustomSlideProps) {
           </div>
         </div>
 
-        <p className="mt-3 text-center text-[13px] text-slate-300">
+        <p className="mt-3 text-center text-[13px] text-stone-300">
           {solved
-            ? `${result.toLocaleString()} possible podiums — picking ${k} of ${n} cars in order.`
+            ? `${result.toLocaleString()} possible podiums, picking ${k} of ${n} cars in order.`
             : "Write the number in front of each factorial, then what it all equals."}
         </p>
       </div>

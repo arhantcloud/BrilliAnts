@@ -1,6 +1,11 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, firebaseEnabled } from "../firebase";
-import type { ProgressMap, QuizResultMap, UserStats } from "../types";
+import type {
+  MistakeMap,
+  ProgressMap,
+  QuizResultMap,
+  UserStats,
+} from "../types";
 
 export const emptyStats: UserStats = {
   currentStreak: 0,
@@ -12,6 +17,7 @@ export type UserData = {
   progress: ProgressMap;
   quizzes: QuizResultMap;
   stats: UserStats;
+  mistakes: MistakeMap;
 };
 
 const localKey = (uid: string) => `cc_userdata_${uid}`;
@@ -25,12 +31,13 @@ function readLocal(uid: string): UserData {
         progress: data.progress ?? {},
         quizzes: data.quizzes ?? {},
         stats: data.stats ?? { ...emptyStats },
+        mistakes: data.mistakes ?? {},
       };
     }
   } catch {
     /* ignore */
   }
-  return { progress: {}, quizzes: {}, stats: { ...emptyStats } };
+  return { progress: {}, quizzes: {}, stats: { ...emptyStats }, mistakes: {} };
 }
 
 function writeLocal(uid: string, data: UserData) {
@@ -47,9 +54,10 @@ export async function loadUserData(uid: string): Promise<UserData> {
         progress: data.progress ?? {},
         quizzes: data.quizzes ?? {},
         stats: data.stats ?? { ...emptyStats },
+        mistakes: data.mistakes ?? {},
       };
     }
-    return { progress: {}, quizzes: {}, stats: { ...emptyStats } };
+    return { progress: {}, quizzes: {}, stats: { ...emptyStats }, mistakes: {} };
   }
   return readLocal(uid);
 }

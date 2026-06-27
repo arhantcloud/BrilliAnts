@@ -4,13 +4,13 @@ import type { CustomSlideProps } from "./registry";
 const MIN_N = 3;
 const MAX_N = 8;
 const COLORS = [
-  "#fb7185",
-  "#38bdf8",
+  "#c05f33",
+  "#d27c4f",
   "#fbbf24",
-  "#a78bfa",
+  "#9e8b5f",
   "#34d399",
-  "#f472b6",
-  "#60a5fa",
+  "#e3a079",
+  "#84724a",
   "#facc15",
 ];
 
@@ -90,9 +90,9 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
       <h2 className="mt-2 text-xl font-extrabold leading-tight">
         {slide.title ?? "The handshake party"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Every guest shakes hands with every other guest exactly once. A handshake
-        is just a <b>pair</b> of people — order doesn't matter. How many
+        is just a <b>pair</b> of people, and order doesn't matter. How many
         handshakes happen?
       </p>
 
@@ -101,12 +101,12 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
         <button
           onClick={() => changeN(Math.max(MIN_N, n - 1))}
           disabled={solved || n <= MIN_N}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl font-bold text-slate-600 transition active:scale-90 disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-600 transition active:scale-90 disabled:opacity-40"
         >
           −
         </button>
         <div className="flex min-w-[64px] flex-col items-center">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-stone-400">
             guests (n)
           </span>
           <span className="text-3xl font-extrabold text-emerald-600">{n}</span>
@@ -114,7 +114,7 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
         <button
           onClick={() => changeN(Math.min(MAX_N, n + 1))}
           disabled={solved || n >= MAX_N}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl font-bold text-slate-600 transition active:scale-90 disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-600 transition active:scale-90 disabled:opacity-40"
         >
           +
         </button>
@@ -130,7 +130,7 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
               y1={pts[i].y}
               x2={pts[j].x}
               y2={pts[j].y}
-              stroke={solved ? "#34d399" : "#94a3b8"}
+              stroke={solved ? "#34d399" : "#a8a29e"}
               strokeWidth={1.5}
               strokeOpacity={0.55}
               className="animate-fade-in"
@@ -150,8 +150,8 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
         </svg>
       </div>
 
-      {/* Expansion readout — every number is a fill-in blank */}
-      <div className="mt-4 rounded-2xl bg-slate-900 p-5 text-center text-white">
+      {/* Expansion readout: every number is a fill-in blank */}
+      <div className="mt-4 rounded-2xl bg-stone-900 p-5 text-center text-white">
         <div className="inline-block space-y-2 text-left text-2xl font-extrabold tracking-wide">
           <p className="flex flex-wrap items-center gap-1.5">
             <span>C(</span>
@@ -169,11 +169,11 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
           </p>
           <p className="flex flex-wrap items-center gap-2">
             <span>=</span>
-            <span className="text-slate-400">(</span>
+            <span className="text-stone-400">(</span>
             <DarkField k="f1" vals={vals} isCorrect={isCorrect} solved={solved} onChange={setVal} />
             <span>×</span>
             <DarkField k="f2" vals={vals} isCorrect={isCorrect} solved={solved} onChange={setVal} />
-            <span className="text-slate-400">) /</span>
+            <span className="text-stone-400">) /</span>
             <DarkField k="d1" vals={vals} isCorrect={isCorrect} solved={solved} onChange={setVal} />
           </p>
           <p className="flex flex-wrap items-center gap-2">
@@ -181,7 +181,7 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
             <DarkField k="res" vals={vals} isCorrect={isCorrect} solved={solved} onChange={setVal} wide />
           </p>
         </div>
-        <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-stone-500">
           Fill in every number
         </p>
       </div>
@@ -191,7 +191,7 @@ export default function HandshakeParty({ slide, onComplete }: CustomSlideProps) 
           <p className="font-bold">Lesson 4 complete</p>
           <p className="mt-0.5">
             C({n}, 2) = P({n}, 2) / 2! = ({n} × {n - 1}) / 2 = {handshakes}. Every
-            handshake is a <b>combination</b> — choose 2 of {n}, order ignored.
+            handshake is a <b>combination</b>: choose 2 of {n}, order ignored.
           </p>
         </div>
       )}

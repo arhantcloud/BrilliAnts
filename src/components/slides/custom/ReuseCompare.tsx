@@ -19,7 +19,7 @@ export default function ReuseCompare({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Why reuse counts more"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Same {N} items, same {K} slots. The only difference: can you reuse? With
         reuse, the choices never shrink.
       </p>
@@ -41,14 +41,14 @@ export default function ReuseCompare({ slide, onComplete }: CustomSlideProps) {
         />
       </div>
 
-      <div className="mt-4 rounded-2xl bg-slate-900 p-5 text-center text-white">
+      <div className="mt-4 rounded-2xl bg-stone-900 p-5 text-center text-white">
         <p className="text-[15px] font-semibold">
           From slot 2 on, reuse keeps the full {N} choices while no-reuse drops
           to {N - 1}, {N - 2}, …
         </p>
         <p className="mt-2 text-2xl font-extrabold">
           <span className="text-brand-300">{withVal}</span>
-          <span className="text-slate-500"> vs </span>
+          <span className="text-stone-500"> vs </span>
           <span className="text-rose-300">{noVal}</span>
         </p>
       </div>
@@ -70,8 +70,8 @@ function CompareRow({
   chip: string;
 }) {
   return (
-    <div className="rounded-2xl border-2 border-slate-100 bg-white p-3">
-      <p className="text-[12px] font-bold uppercase tracking-wide text-slate-400">
+    <div className="rounded-2xl border-2 border-stone-100 bg-white p-3">
+      <p className="text-[12px] font-bold uppercase tracking-wide text-stone-400">
         {title}
       </p>
       <div className="mt-2 flex items-center gap-2">

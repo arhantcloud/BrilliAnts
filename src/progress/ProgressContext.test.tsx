@@ -5,7 +5,7 @@ import { AuthProvider } from "../auth/AuthContext";
 import { ProgressProvider } from "./ProgressContext";
 import { useProgress } from "./progress-context";
 import { course } from "../content/course";
-import { getLessonQuiz } from "../content/quizzes";
+import { FINAL_QUIZ_ID, getLessonQuiz } from "../content/quizzes";
 
 const L1 = course.lessons[0];
 const L2 = course.lessons[1];
@@ -138,12 +138,119 @@ describe("ProgressContext", () => {
       const { result } = await renderProgress();
       act(() => result.current.recordQuizAttempt(L1.id, 3, 5));
       expect(result.current.quizPointsEarned).toBe(3);
-      // Only lessons that actually have a quiz contribute to the total.
-      const expectedTotal = course.lessons.reduce(
-        (sum, l) => sum + (getLessonQuiz(l.id)?.questionCount ?? 0),
-        0,
-      );
+      // Lessons with a quiz plus the final exam contribute to the total.
+      const expectedTotal =
+        course.lessons.reduce(
+          (sum, l) => sum + (getLessonQuiz(l.id)?.questionCount ?? 0),
+          0,
+        ) + (getLessonQuiz(FINAL_QUIZ_ID)?.questionCount ?? 0);
       expect(result.current.quizPointsTotal).toBe(expectedTotal);
+    });
+  });
+
+  describe("mistakes / Ant Colony", () => {
+    const wrong = (templateId: string, style?: number) =>
+      style === undefined ? { templateId } : { templateId, style };
+
+    it("creates one ant per wrong question on the first attempt", async () => {
+      const { result } = await renderProgress();
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 3, 5, [
+          wrong("classify"),
+          wrong("classify"),
+        ]),
+      );
+      expect(result.current.mistakeCount(L1.id)).toBe(2);
+      expect(result.current.totalMistakes).toBe(2);
+      expect(result.current.mistakes[L1.id]).toHaveLength(2);
+      expect(result.current.mistakes[L1.id][0]).toMatchObject({
+        lessonId: L1.id,
+        templateId: "classify",
+      });
+    });
+
+    it("replaces ants when a retake sets a new high score", async () => {
+      const { result } = await renderProgress();
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 2, 5, [
+          wrong("classify"),
+          wrong("classify"),
+          wrong("classify"),
+        ]),
+      );
+      expect(result.current.mistakeCount(L1.id)).toBe(3);
+
+      // Better retake (4/5) -> ants reflect the new attempt's single miss.
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 4, 5, [wrong("classify")]),
+      );
+      expect(result.current.mistakeCount(L1.id)).toBe(1);
+      expect(result.current.quizResult(L1.id)).toMatchObject({ bestCorrect: 4 });
+    });
+
+    it("keeps existing ants when a retake does not beat the best", async () => {
+      const { result } = await renderProgress();
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 4, 5, [wrong("classify")]),
+      );
+      const firstAntId = result.current.mistakes[L1.id][0].id;
+
+      // Worse retake (1/5) with different wrong list -> ants unchanged.
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 1, 5, [
+          wrong("classify"),
+          wrong("classify"),
+          wrong("classify"),
+          wrong("classify"),
+        ]),
+      );
+      expect(result.current.mistakeCount(L1.id)).toBe(1);
+      expect(result.current.mistakes[L1.id][0].id).toBe(firstAntId);
+    });
+
+    it("resolveMistake removes the ant, bumps best score, and raises quiz points", async () => {
+      const { result } = await renderProgress();
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 3, 5, [
+          wrong("classify"),
+          wrong("classify"),
+        ]),
+      );
+      expect(result.current.quizPointsEarned).toBe(3);
+
+      const antId = result.current.mistakes[L1.id][0].id;
+      act(() => result.current.resolveMistake(L1.id, antId));
+
+      expect(result.current.mistakeCount(L1.id)).toBe(1);
+      expect(result.current.quizResult(L1.id)).toMatchObject({ bestCorrect: 4 });
+      expect(result.current.quizPointsEarned).toBe(4);
+    });
+
+    it("caps recovered points at the quiz length", async () => {
+      const { result } = await renderProgress();
+      // Best 4/5 with one ant outstanding.
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 4, 5, [wrong("classify")]),
+      );
+      const antId = result.current.mistakes[L1.id][0].id;
+      act(() => result.current.resolveMistake(L1.id, antId));
+
+      expect(result.current.mistakeCount(L1.id)).toBe(0);
+      // bestCorrect maxes out at total (5), never above it.
+      expect(result.current.quizResult(L1.id)).toMatchObject({
+        bestCorrect: 5,
+        total: 5,
+      });
+    });
+
+    it("ignores resolveMistake for an unknown ant id", async () => {
+      const { result } = await renderProgress();
+      act(() =>
+        result.current.recordQuizAttempt(L1.id, 3, 5, [wrong("classify")]),
+      );
+      act(() => result.current.resolveMistake(L1.id, "does-not-exist"));
+      expect(result.current.mistakeCount(L1.id)).toBe(1);
+      expect(result.current.quizResult(L1.id)).toMatchObject({ bestCorrect: 3 });
     });
   });
 
@@ -171,6 +278,21 @@ describe("ProgressContext", () => {
       completeLesson(result, L1);
       act(() => result.current.recordQuizAttempt(L1.id, 3, 5)); // 60%
       expect(result.current.quizStatus(L1.id)).toBe("passed");
+    });
+
+    it("keeps the final exam locked until every lesson is completed", async () => {
+      const { result } = await renderProgress();
+      expect(result.current.quizStatus(FINAL_QUIZ_ID)).toBe("locked");
+
+      act(() => {
+        for (const lesson of course.lessons) {
+          for (let i = 0; i < lesson.slides.length; i++) {
+            result.current.completeSlide(lesson.id, i, lesson.slides.length);
+          }
+        }
+      });
+
+      expect(result.current.quizStatus(FINAL_QUIZ_ID)).toBe("available");
     });
   });
 

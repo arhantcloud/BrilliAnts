@@ -19,7 +19,7 @@ const TYPES: Record<TypeId, TypeInfo> = {
     order: "order matters",
     replacement: "no repeats",
     emoji: "🥇",
-    example: "Race podium — who finishes 1st, 2nd, 3rd.",
+    example: "Race podium: who finishes 1st, 2nd, 3rd.",
   },
   sequences: {
     id: "sequences",
@@ -27,7 +27,7 @@ const TYPES: Record<TypeId, TypeInfo> = {
     order: "order matters",
     replacement: "repeats allowed",
     emoji: "🔢",
-    example: "4-digit PIN — digits can repeat and order counts.",
+    example: "4-digit PIN: digits can repeat and order counts.",
   },
   combinations: {
     id: "combinations",
@@ -35,7 +35,7 @@ const TYPES: Record<TypeId, TypeInfo> = {
     order: "order doesn't matter",
     replacement: "no repeats",
     emoji: "👥",
-    example: "Study team — pick 3 friends from a group.",
+    example: "Study team: pick 3 friends from a group.",
   },
   multisets: {
     id: "multisets",
@@ -43,7 +43,7 @@ const TYPES: Record<TypeId, TypeInfo> = {
     order: "order doesn't matter",
     replacement: "repeats allowed",
     emoji: "🍕",
-    example: "Pizza — 8 toppings chosen from 4, repeats ok.",
+    example: "Pizza: 8 toppings chosen from 4, repeats ok.",
   },
 };
 
@@ -58,7 +58,7 @@ const GRID: TypeId[] = [
 export default function ReviewMap({ slide, onComplete }: CustomSlideProps) {
   const [selected, setSelected] = useState<TypeId | null>(null);
 
-  // Review slide — no gate; allow advancing right away.
+  // Review slide: no gate; allow advancing right away.
   useEffect(() => {
     onComplete();
   }, [onComplete]);
@@ -68,7 +68,7 @@ export default function ReviewMap({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Review: the four kinds"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Two questions decide everything: does <b>order matter</b>, and can items{" "}
         <b>repeat</b>? Tap each type to review what you learned.
       </p>
@@ -85,11 +85,11 @@ export default function ReviewMap({ slide, onComplete }: CustomSlideProps) {
               className={`flex animate-fade-in-up flex-col items-center justify-center rounded-2xl border-2 px-2 py-4 text-center transition active:scale-[0.98] ${
                 active
                   ? "border-brand-500 bg-brand-50"
-                  : "border-slate-200 bg-white hover:border-brand-300"
+                  : "border-stone-200 bg-white hover:border-brand-300"
               }`}
             >
               <span className="text-2xl leading-none">{t.emoji}</span>
-              <span className="mt-1.5 text-[13px] font-bold text-slate-800">
+              <span className="mt-1.5 text-[13px] font-bold text-stone-800">
                 {t.name}
               </span>
             </button>
@@ -104,9 +104,9 @@ export default function ReviewMap({ slide, onComplete }: CustomSlideProps) {
 
 function DetailPanel({ type }: { type: TypeInfo | null }) {
   return (
-    <div className="mt-4 min-h-[120px] rounded-2xl bg-slate-900 p-5 text-white">
+    <div className="mt-4 min-h-[120px] rounded-2xl bg-stone-900 p-5 text-white">
       {!type ? (
-        <div className="flex h-[80px] items-center justify-center text-center text-sm text-slate-400">
+        <div className="flex h-[80px] items-center justify-center text-center text-sm text-stone-400">
           Tap a type above to review it.
         </div>
       ) : (
@@ -119,7 +119,7 @@ function DetailPanel({ type }: { type: TypeInfo | null }) {
             <Tag>{type.order}</Tag>
             <Tag>{type.replacement}</Tag>
           </div>
-          <p className="mt-3 text-[13px] text-slate-300">
+          <p className="mt-3 text-[13px] text-stone-300">
             <span className="font-semibold text-brand-200">Example: </span>
             {type.example}
           </p>

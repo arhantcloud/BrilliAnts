@@ -7,6 +7,7 @@ service cloud.firestore {
     //     progress: { [lessonId]: LessonProgress },
     //     quizzes:  { [lessonId]: QuizResult },
     //     stats:    UserStats,
+    //     mistakes: { [lessonId]: Mistake[] },
     //   }
     // (see src/data/persistence.ts and src/types.ts)
 
@@ -31,14 +32,21 @@ service cloud.firestore {
       return q is map && q.size() <= 200;
     }
 
+    // Validates the mistakes map of lessonId -> Mistake[] (the Ant Colony).
+    function isValidMistakes(m) {
+      // Cap collection size to prevent storage abuse / DoS.
+      return m is map && m.size() <= 200;
+    }
+
     // Validates the resulting user document (works for create and merge-update,
     // since request.resource.data is the full post-write document).
     function isValidUserDoc(data) {
-      return data.keys().hasOnly(['progress', 'quizzes', 'stats'])
+      return data.keys().hasOnly(['progress', 'quizzes', 'stats', 'mistakes'])
         // Cap collection size to prevent storage abuse / DoS.
         && (!('progress' in data) || (data.progress is map && data.progress.size() <= 200))
         && (!('quizzes' in data) || isValidQuizzes(data.quizzes))
-        && (!('stats' in data) || isValidStats(data.stats));
+        && (!('stats' in data) || isValidStats(data.stats))
+        && (!('mistakes' in data) || isValidMistakes(data.mistakes));
     }
 
     match /users/{uid} {

@@ -3,15 +3,22 @@ import type { GeneratedQuestion } from "../../types";
 import type { QuizQuestionSpec, QuizQuestionViewProps } from "../QuizQuestionSpec";
 import { permutations, type Rng } from "../rng";
 import { Feedback, QuestionShell } from "./shared";
+import { useMascotOptional } from "../../mascot/mascot-context";
+import type { AntStop } from "../../mascot/mascot-context";
+import {
+  permCrossOutBoxes,
+  permFormulaBoxes,
+  permProductBoxes,
+} from "../../mascot/boxExplanations";
 
 /**
- * Lesson 2 — order matters, no reuse: P(n, k) = n! / (n − k)!.
+ * Lesson 2: order matters, no reuse: P(n, k) = n! / (n − k)!.
  *
  * Three interaction styles (picked per question by the quiz's style plan), each
  * a genuine derivation of the count rather than a different way to type a number:
- *   0. cross-out      — strike the tail factors of n! that cancel
- *   1. fill-formula   — fill P(n,k)=n!/(n−k)! with the values and the result (no hints)
- *   2. descending     — write the count as the product of the per-step choices
+ *   0. cross-out      : strike the tail factors of n! that cancel
+ *   1. fill-formula   : fill P(n,k)=n!/(n−k)! with the values and the result (no hints)
+ *   2. descending     : write the count as the product of the per-step choices
  * Nothing on screen states the answer.
  */
 
@@ -40,10 +47,11 @@ type BodyProps = {
   answer: number;
   theme: Theme;
   locked: boolean;
+  params: Record<string, number | string>;
   onResult(correct: boolean): void;
 };
 
-type FieldState = "idle" | "correct" | "wrong";
+type FieldState = "idle" | "correct" | "wrong" | "corrected";
 
 /** A small numeric blank used inside the formula/product styles. */
 function NumInput({
@@ -54,6 +62,7 @@ function NumInput({
   disabled,
   state,
   width = "w-14",
+  boxId,
 }: {
   label: string;
   value: string;
@@ -62,18 +71,22 @@ function NumInput({
   disabled: boolean;
   state: FieldState;
   width?: string;
+  boxId?: string;
 }) {
   const ring =
-    state === "correct"
-      ? "border-emerald-400 bg-emerald-50 text-emerald-700"
-      : state === "wrong"
-        ? "border-red-400 bg-red-50 text-red-600"
-        : "border-violet-300 bg-white text-slate-800 focus:border-violet-500";
+    state === "corrected"
+      ? "border-lime-400 bg-lime-100 text-lime-700"
+      : state === "correct"
+        ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+        : state === "wrong"
+          ? "border-red-400 bg-red-50 text-red-600"
+          : "border-umber-300 bg-white text-stone-800 focus:border-umber-500";
   return (
     <input
       type="text"
       inputMode="numeric"
       aria-label={label}
+      data-ant-box={boxId}
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
@@ -82,7 +95,7 @@ function NumInput({
       }}
       autoComplete="off"
       placeholder="?"
-      className={`${width} rounded-lg border-2 px-1 py-1.5 text-center text-xl font-extrabold tabular-nums outline-none transition placeholder:text-slate-300 disabled:opacity-70 ${ring}`}
+      className={`${width} rounded-lg border-2 px-1 py-1.5 text-center text-xl font-extrabold tabular-nums outline-none transition placeholder:text-stone-300 disabled:opacity-70 ${ring}`}
     />
   );
 }
@@ -107,7 +120,7 @@ function SubmitOrFeedback({
     <button
       onClick={onSubmit}
       disabled={!ready || isLocked}
-      className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-violet-600 px-4 py-3 font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+      className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-umber-600 px-4 py-3 font-semibold text-white transition hover:bg-umber-700 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
     >
       Submit
     </button>
@@ -116,13 +129,17 @@ function SubmitOrFeedback({
 
 /* --------------------------- style 0: cross out -------------------------- */
 
-function CrossOut({ n, k, answer, locked, onResult }: BodyProps) {
+function CrossOut({ n, k, answer, theme, params, locked, onResult }: BodyProps) {
+  const mascot = useMascotOptional();
   const factors = Array.from({ length: n }, (_, i) => n - i); // n, n-1, ..., 1
   const cancelCount = n - k; // the tail (n−k)! that cancels
 
   const [crossed, setCrossed] = useState<Set<number>>(() => new Set());
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [corrected, setCorrected] = useState<Set<string>>(() => new Set());
+  const markCorrected = (id: string) =>
+    setCorrected((prev) => new Set(prev).add(id));
 
   const isLocked = locked || submitted;
   const interactionOk = factors.every((f) =>
@@ -144,23 +161,55 @@ function CrossOut({ n, k, answer, locked, onResult }: BodyProps) {
 
   function submit() {
     if (isLocked || !ready) return;
+    const valueOk = Number(value) === answer;
     setSubmitted(true);
-    onResult(interactionOk && Number(value) === answer);
+    onResult(interactionOk && valueOk);
+    if (!(interactionOk && valueOk)) {
+      const boxes = permCrossOutBoxes({ n, k, answer, pool: theme.pool, params });
+      const stops: AntStop[] = [];
+      if (!interactionOk)
+        stops.push({
+          ...boxes.crossout,
+          fix: () => {
+            setCrossed(
+              new Set(Array.from({ length: cancelCount }, (_, i) => i + 1)),
+            );
+            markCorrected("perm-crossout");
+          },
+        });
+      if (!valueOk)
+        stops.push({
+          ...boxes.result,
+          fix: () => {
+            setValue(String(answer));
+            markCorrected("perm-crossout-result");
+          },
+        });
+      mascot?.reviewBoxes(stops);
+    }
   }
 
   return (
     <>
-      <p className="mt-4 text-[13px] text-slate-600">
+      <p className="mt-4 text-[13px] text-stone-600">
         Writing out <b>{n}!</b> counts every full lineup of all {n}. But you only
         fill <b>{k}</b> spots, so the tail factors cancel. <b>Cross out</b> the
-        factors that cancel away — what's left is the count.
+        factors that cancel away. What's left is the count.
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 rounded-2xl border-2 border-violet-100 bg-violet-50/40 p-4">
+      <div
+        data-ant-box="perm-crossout"
+        className={`mt-4 flex flex-wrap items-center justify-center gap-2 rounded-2xl border-2 bg-umber-50/40 p-4 ${
+          corrected.has("perm-crossout")
+            ? "border-lime-400 ring-2 ring-lime-300"
+            : "border-umber-100"
+        }`}
+      >
         {factors.map((f, i) => {
           const isCrossed = crossed.has(f);
           const shouldCross = f <= cancelCount;
           const wrong = submitted && isCrossed !== shouldCross;
+          const fixedRemain = corrected.has("perm-crossout") && !isCrossed;
           return (
             <div key={f} className="flex items-center gap-2">
               <button
@@ -170,32 +219,34 @@ function CrossOut({ n, k, answer, locked, onResult }: BodyProps) {
                 disabled={isLocked}
                 onClick={() => toggle(f)}
                 className={`relative h-11 w-11 rounded-xl border-2 text-xl font-extrabold tabular-nums transition ${
-                  wrong
-                    ? "border-red-400 bg-red-50 text-red-500"
-                    : isCrossed
-                      ? "border-slate-200 bg-slate-100 text-slate-300"
-                      : "border-violet-300 bg-white text-slate-800 hover:border-violet-500"
+                  fixedRemain
+                    ? "border-lime-400 bg-lime-100 text-lime-700"
+                    : wrong
+                      ? "border-red-400 bg-red-50 text-red-500"
+                      : isCrossed
+                        ? "border-stone-200 bg-stone-100 text-stone-300"
+                        : "border-umber-300 bg-white text-stone-800 hover:border-umber-500"
                 }`}
               >
                 {f}
                 {isCrossed && (
                   <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="h-0.5 w-9 -rotate-12 rounded bg-slate-400" />
+                    <span className="h-0.5 w-9 -rotate-12 rounded bg-stone-400" />
                   </span>
                 )}
               </button>
               {i < factors.length - 1 && (
-                <span className="text-lg font-bold text-slate-300">×</span>
+                <span className="text-lg font-bold text-stone-300">×</span>
               )}
             </div>
           );
         })}
       </div>
 
-      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-white">
+      <div className="mt-5 rounded-2xl bg-stone-900 p-5 text-white">
         <label
           htmlFor="perm-final-answer"
-          className="block text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300"
+          className="block text-[11px] font-bold uppercase tracking-[0.18em] text-umber-300"
         >
           How many ordered outcomes in total?
         </label>
@@ -205,6 +256,7 @@ function CrossOut({ n, k, answer, locked, onResult }: BodyProps) {
             type="text"
             inputMode="numeric"
             aria-label="Final answer"
+            data-ant-box="perm-crossout-result"
             value={value}
             disabled={isLocked}
             onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, ""))}
@@ -213,15 +265,17 @@ function CrossOut({ n, k, answer, locked, onResult }: BodyProps) {
             }}
             autoComplete="off"
             placeholder="?"
-            className={`w-32 rounded-xl border-2 bg-white/10 px-3 py-2 text-center text-xl font-extrabold tabular-nums text-white outline-none transition placeholder:text-slate-500 focus:border-violet-400 disabled:opacity-60 ${
-              submitted
-                ? Number(value) === answer
-                  ? "border-emerald-400"
-                  : "border-red-400"
-                : "border-white/20"
+            className={`w-32 rounded-xl border-2 bg-white/10 px-3 py-2 text-center text-xl font-extrabold tabular-nums text-white outline-none transition placeholder:text-stone-500 focus:border-umber-400 disabled:opacity-60 ${
+              corrected.has("perm-crossout-result")
+                ? "border-lime-400 bg-lime-400/20"
+                : submitted
+                  ? Number(value) === answer
+                    ? "border-emerald-400"
+                    : "border-red-400"
+                  : "border-white/20"
             }`}
           />
-          <span className="text-sm font-semibold text-slate-400">ways</span>
+          <span className="text-sm font-semibold text-stone-400">ways</span>
         </div>
       </div>
 
@@ -242,7 +296,8 @@ function CrossOut({ n, k, answer, locked, onResult }: BodyProps) {
 type FormulaKey = "notN" | "notK" | "numN" | "denN" | "denK" | "res";
 const FORMULA_KEYS: FormulaKey[] = ["notN", "notK", "numN", "denN", "denK", "res"];
 
-function FillFormula({ n, k, answer, locked, onResult }: BodyProps) {
+function FillFormula({ n, k, answer, theme, params, locked, onResult }: BodyProps) {
+  const mascot = useMascotOptional();
   const expected: Record<FormulaKey, number> = {
     notN: n,
     notK: k,
@@ -260,6 +315,9 @@ function FillFormula({ n, k, answer, locked, onResult }: BodyProps) {
     res: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [corrected, setCorrected] = useState<Set<string>>(() => new Set());
+  const markCorrected = (id: string) =>
+    setCorrected((prev) => new Set(prev).add(id));
   const isLocked = locked || submitted;
 
   const allFilled = FORMULA_KEYS.every((key) => vals[key].trim() !== "");
@@ -277,8 +335,22 @@ function FillFormula({ n, k, answer, locked, onResult }: BodyProps) {
     if (isLocked || !ready) return;
     setSubmitted(true);
     onResult(interactionOk);
+    if (!interactionOk) {
+      const boxes = permFormulaBoxes({ n, k, answer, pool: theme.pool, params });
+      const stops = FORMULA_KEYS.filter(
+        (key) => Number(vals[key]) !== expected[key],
+      ).map((key) => ({
+        ...boxes[key],
+        fix: () => {
+          setVals((prev) => ({ ...prev, [key]: String(expected[key]) }));
+          markCorrected(`perm-${key}`);
+        },
+      }));
+      mascot?.reviewBoxes(stops);
+    }
   }
   function fieldState(key: FormulaKey): FieldState {
+    if (corrected.has(`perm-${key}`)) return "corrected";
     if (!submitted) return "idle";
     return Number(vals[key]) === expected[key] ? "correct" : "wrong";
   }
@@ -292,16 +364,17 @@ function FillFormula({ n, k, answer, locked, onResult }: BodyProps) {
       disabled={isLocked}
       state={fieldState(key)}
       width={width}
+      boxId={`perm-${key}`}
     />
   );
 
   return (
     <>
-      <p className="mt-4 text-[13px] text-slate-600">
+      <p className="mt-4 text-[13px] text-stone-600">
         Fill in the permutation formula with the values, then compute the result.
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-4 rounded-2xl border-2 border-violet-100 bg-violet-50/40 p-5 text-2xl font-extrabold text-slate-700">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-4 rounded-2xl border-2 border-umber-100 bg-umber-50/40 p-5 text-2xl font-extrabold text-stone-700">
         <span>P(</span>
         {field("notN", "formula notation n")}
         <span>,</span>
@@ -313,7 +386,7 @@ function FillFormula({ n, k, answer, locked, onResult }: BodyProps) {
             {field("numN", "formula numerator n")}
             <span>!</span>
           </span>
-          <span className="h-0.5 w-full min-w-[170px] rounded bg-slate-400" />
+          <span className="h-0.5 w-full min-w-[170px] rounded bg-stone-400" />
           <span className="flex items-center gap-1 pt-1.5">
             <span>(</span>
             {field("denN", "formula denominator n")}
@@ -341,12 +414,24 @@ function FillFormula({ n, k, answer, locked, onResult }: BodyProps) {
 
 /* ------------------------ style 2: descending product ------------------- */
 
-function DescendingProduct({ n, k, answer, locked, onResult }: BodyProps) {
+function DescendingProduct({
+  n,
+  k,
+  answer,
+  theme,
+  params,
+  locked,
+  onResult,
+}: BodyProps) {
+  const mascot = useMascotOptional();
   // P(n,k) = n · (n−1) · … · (n−k+1): k descending factors, then the product.
   const expectedTerms = Array.from({ length: k }, (_, i) => n - i);
   const [terms, setTerms] = useState<string[]>(() => Array(k).fill(""));
   const [result, setResult] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [corrected, setCorrected] = useState<Set<string>>(() => new Set());
+  const markCorrected = (id: string) =>
+    setCorrected((prev) => new Set(prev).add(id));
   const isLocked = locked || submitted;
 
   const allFilled =
@@ -364,25 +449,55 @@ function DescendingProduct({ n, k, answer, locked, onResult }: BodyProps) {
     if (isLocked || !ready) return;
     setSubmitted(true);
     onResult(interactionOk);
+    if (!interactionOk) {
+      const boxes = permProductBoxes({ n, k, answer, pool: theme.pool, params });
+      const stops: AntStop[] = [];
+      terms.forEach((t, i) => {
+        if (Number(t) !== expectedTerms[i])
+          stops.push({
+            ...boxes.terms[i],
+            fix: () => {
+              setTerms((prev) =>
+                prev.map((t, idx) =>
+                  idx === i ? String(expectedTerms[i]) : t,
+                ),
+              );
+              markCorrected(`perm-term-${i}`);
+            },
+          });
+      });
+      if (Number(result) !== answer)
+        stops.push({
+          ...boxes.result,
+          fix: () => {
+            setResult(String(answer));
+            markCorrected("perm-product-result");
+          },
+        });
+      mascot?.reviewBoxes(stops);
+    }
   }
   function termState(i: number): FieldState {
+    if (corrected.has(`perm-term-${i}`)) return "corrected";
     if (!submitted) return "idle";
     return Number(terms[i]) === expectedTerms[i] ? "correct" : "wrong";
   }
-  const resultState: FieldState = !submitted
-    ? "idle"
-    : Number(result) === answer
-      ? "correct"
-      : "wrong";
+  const resultState: FieldState = corrected.has("perm-product-result")
+    ? "corrected"
+    : !submitted
+      ? "idle"
+      : Number(result) === answer
+        ? "correct"
+        : "wrong";
 
   return (
     <>
-      <p className="mt-4 text-[13px] text-slate-600">
-        Count the choices at each step and write the result as their product —{" "}
+      <p className="mt-4 text-[13px] text-stone-600">
+        Count the choices at each step and write the result as their product,{" "}
         <b>{k}</b> factors in all.
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 rounded-2xl border-2 border-violet-100 bg-violet-50/40 p-5 text-2xl font-extrabold text-slate-400">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 rounded-2xl border-2 border-umber-100 bg-umber-50/40 p-5 text-2xl font-extrabold text-stone-400">
         {terms.map((t, i) => (
           <div key={i} className="flex items-center gap-2">
             <NumInput
@@ -392,6 +507,7 @@ function DescendingProduct({ n, k, answer, locked, onResult }: BodyProps) {
               onEnter={submit}
               disabled={isLocked}
               state={termState(i)}
+              boxId={`perm-term-${i}`}
             />
             {i < terms.length - 1 && <span>×</span>}
           </div>
@@ -405,6 +521,7 @@ function DescendingProduct({ n, k, answer, locked, onResult }: BodyProps) {
           disabled={isLocked}
           state={resultState}
           width="w-20"
+          boxId="perm-product-result"
         />
       </div>
 
@@ -428,7 +545,15 @@ function PermutationQuestion({ question, locked, onResult }: QuizQuestionViewPro
   const answer = Number(question.answer);
   const style = Number(question.params.style) || 0;
   const theme = THEMES[Number(question.params.theme)] ?? THEMES[0];
-  const base: BodyProps = { n, k, answer, theme, locked, onResult };
+  const base: BodyProps = {
+    n,
+    k,
+    answer,
+    theme,
+    locked,
+    onResult,
+    params: question.params,
+  };
 
   let prompt: ReactNode;
   let body: ReactNode;

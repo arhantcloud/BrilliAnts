@@ -2,10 +2,17 @@ import type { GeneratedQuestion, LessonQuiz } from "../types";
 import { getTemplate } from "../quiz/registry";
 import { createRng, type Rng } from "../quiz/rng";
 
+/** Synthetic quiz id for the end-of-course final exam (not a real lesson). */
+export const FINAL_QUIZ_ID = "course-final";
+
 /**
  * Per-lesson post-lesson quizzes. Each lesson draws all of its questions from a
  * single hard, parameterized template (one per lesson); `drawQuiz` produces a
  * fresh set with distinct numbers on every attempt.
+ *
+ * The `course-final` entry is the end-of-course exam: 10 questions spanning
+ * every concept, drawn from the same question types used in the lesson quizzes
+ * (plus one each for the three lessons that have no standalone quiz).
  */
 export const lessonQuizzes: Record<string, LessonQuiz> = {
   "l1-two-questions": {
@@ -26,14 +33,34 @@ export const lessonQuizzes: Record<string, LessonQuiz> = {
     questionCount: 5,
     // Every question is the same guided derivation (P(n,k), then k!, then divide).
   },
-  // Lesson 5 (multisets) has no post-lesson quiz.
+  // Lessons 3, 5, and 6 have no standalone quiz; their question types
+  // (sequence / multiset / distribute) are exercised in the final exam below.
+  [FINAL_QUIZ_ID]: {
+    lessonId: FINAL_QUIZ_ID,
+    // With questionCount === templateIds.length, each slot is used once in this
+    // exact order: three classify, two permutation, two combination, and one
+    // each of the lesson-inspired sequence / multiset / distribute questions.
+    templateIds: [
+      "classify",
+      "permutation",
+      "sequence",
+      "combination",
+      "multiset",
+      "classify",
+      "permutation",
+      "distribute",
+      "combination",
+      "classify",
+    ],
+    questionCount: 10,
+  },
 };
 
 export function getLessonQuiz(lessonId: string): LessonQuiz | undefined {
   return lessonQuizzes[lessonId];
 }
 
-/** Signature of a question's numeric params — used to keep an attempt's numbers distinct. */
+/** Signature of a question's numeric params, used to keep an attempt's numbers distinct. */
 function numericSignature(q: GeneratedQuestion): string {
   return Object.keys(q.params)
     .filter((key) => typeof q.params[key] === "number")

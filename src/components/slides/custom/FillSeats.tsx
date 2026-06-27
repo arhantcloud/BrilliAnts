@@ -5,9 +5,9 @@ type Person = { id: string; name: string; color: string };
 
 const PEOPLE: Person[] = [
   { id: "ava", name: "Ava", color: "bg-rose-400" },
-  { id: "ben", name: "Ben", color: "bg-sky-400" },
+  { id: "ben", name: "Ben", color: "bg-brand-400" },
   { id: "cy", name: "Cy", color: "bg-amber-400" },
-  { id: "dee", name: "Dee", color: "bg-violet-400" },
+  { id: "dee", name: "Dee", color: "bg-umber-400" },
 ];
 
 const N = PEOPLE.length;
@@ -54,8 +54,8 @@ export default function FillSeats({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Fill the seats"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
-        Seat these 4 friends in a row. Tap a friend to take the next seat — the
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
+        Seat these 4 friends in a row. Tap a friend to take the next seat. The
         seat shows how many choices you have, and it shrinks each time.
       </p>
 
@@ -67,7 +67,7 @@ export default function FillSeats({ slide, onComplete }: CustomSlideProps) {
           const isActive = i === activeSeat;
           return (
             <div key={i} className="flex flex-col items-center gap-1">
-              <span className="text-[10px] font-bold text-slate-400">
+              <span className="text-[10px] font-bold text-stone-400">
                 Seat {i + 1}
               </span>
               <div
@@ -76,7 +76,7 @@ export default function FillSeats({ slide, onComplete }: CustomSlideProps) {
                     ? "border-transparent"
                     : isActive
                       ? "border-brand-500"
-                      : "border-dashed border-slate-200 bg-slate-50"
+                      : "border-dashed border-stone-200 bg-stone-50"
                 }`}
               >
                 {person ? (
@@ -119,17 +119,17 @@ export default function FillSeats({ slide, onComplete }: CustomSlideProps) {
         )}
       </div>
 
-      {/* Running product — the learner fills in the total. */}
-      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-center text-white">
+      {/* Running product: the learner fills in the total. */}
+      <div className="mt-5 rounded-2xl bg-stone-900 p-5 text-center text-white">
         {seated.length === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-stone-400">
             Seat 1 has {N} choices. Tap a friend to begin.
           </p>
         ) : (
           <>
             <p className="flex flex-wrap items-center justify-center gap-2 text-2xl font-extrabold tracking-wide">
               <span>{terms.join(" × ")}</span>
-              {!done && <span className="text-slate-500">× …</span>}
+              {!done && <span className="text-stone-500">× …</span>}
               {done && (
                 <>
                   <span>=</span>
@@ -152,15 +152,15 @@ export default function FillSeats({ slide, onComplete }: CustomSlideProps) {
                 </>
               )}
             </p>
-            <p className="mt-2 text-[13px] text-slate-300">
+            <p className="mt-2 text-[13px] text-stone-300">
               {solved
-                ? `${product} different ways to seat 4 friends — that's 4!`
+                ? `${product} different ways to seat 4 friends, that's 4!`
                 : done
                   ? answer.trim() === ""
                     ? "Now multiply it out and fill in the total."
                     : answerCorrect
                       ? ""
-                      : "Not quite — multiply 4 × 3 × 2 × 1."
+                      : "Not quite, multiply 4 × 3 × 2 × 1."
                   : `Seat ${activeSeat + 1} now has ${N - seated.length} choices left.`}
             </p>
           </>

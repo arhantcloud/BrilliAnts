@@ -2,17 +2,17 @@ import { useRef, useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 /**
- * Lesson 5, slide 2 — distributing is choosing. Hand out K=5 identical $1 bills
+ * Lesson 5, slide 2: distributing is choosing. Hand out K=5 identical $1 bills
  * among N=3 friends. Pin one friend at the front, then the row has BLANKS = K +
  * (N-1) = 7 spots. Dropping the other N-1 = 2 friends into the row and letting
  * cash fill the gaps shows: each friend collects the money to their right, so a
- * payout is just a choice of where the friends stand — C(7, 2) of them.
+ * payout is just a choice of where the friends stand, C(7, 2) of them.
  */
 
 const FRIENDS = [
   { id: "ana", name: "Ana", chip: "bg-rose-500", ring: "ring-rose-300" },
-  { id: "ben", name: "Ben", chip: "bg-sky-500", ring: "ring-sky-300" },
-  { id: "cam", name: "Cam", chip: "bg-violet-500", ring: "ring-violet-300" },
+  { id: "ben", name: "Ben", chip: "bg-brand-500", ring: "ring-brand-300" },
+  { id: "cam", name: "Cam", chip: "bg-umber-500", ring: "ring-umber-300" },
 ];
 const FIXED = FRIENDS[0];
 const MOVABLE = FRIENDS.slice(1); // Ben, Cam
@@ -103,7 +103,7 @@ export default function MultisetDistribute({
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Distributing is choosing"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Hand out <b>${DOLLARS}</b> in $1 bills to <b>3 friends</b>. <b>Ana</b> is
         pinned at the front; drop <b>Ben</b> and <b>Cam</b> into the line. Each
         friend keeps the cash to their <b>right</b>.
@@ -111,7 +111,7 @@ export default function MultisetDistribute({
 
       {/* Tray of movable friends */}
       <div className="mt-4 flex items-center gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-stone-400">
           Place
         </span>
         {tray.length === 0 ? (
@@ -135,14 +135,14 @@ export default function MultisetDistribute({
       </div>
 
       {/* The line: fixed friend at the front, then 7 blanks */}
-      <div className="mt-4 flex items-stretch gap-1 overflow-x-auto rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-100">
+      <div className="mt-4 flex items-stretch gap-1 overflow-x-auto rounded-2xl bg-stone-50 p-2 ring-1 ring-stone-100">
         <div className="flex flex-col items-center">
           <FriendCell friendId={FIXED.id} />
-          <span className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
+          <span className="mt-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
             front
           </span>
         </div>
-        <div className="mx-0.5 w-px shrink-0 self-stretch bg-slate-200" />
+        <div className="mx-0.5 w-px shrink-0 self-stretch bg-stone-200" />
         {slots.map((_, i) => {
           const cell = row[i];
           return (
@@ -161,7 +161,7 @@ export default function MultisetDistribute({
                   <EmptyCell active={sel !== null} />
                 )}
               </button>
-              <span className="mt-1 text-[9px] font-semibold text-slate-300">
+              <span className="mt-1 text-[9px] font-semibold text-stone-300">
                 {i + 1}
               </span>
             </div>
@@ -170,7 +170,7 @@ export default function MultisetDistribute({
       </div>
 
       {!bothPlaced && (
-        <p className="mt-3 text-center text-[13px] text-slate-500">
+        <p className="mt-3 text-center text-[13px] text-stone-500">
           {sel
             ? `Tap a numbered spot to seat ${friendOf(sel).name}.`
             : "Tap a friend above, then tap a spot in the line."}
@@ -180,8 +180,8 @@ export default function MultisetDistribute({
       {bothPlaced && (
         <div className="mt-4 animate-fade-in-up space-y-3">
           {/* Payout readout */}
-          <div className="rounded-2xl bg-slate-900 p-4 text-white">
-            <p className="text-center text-[12px] font-semibold text-slate-300">
+          <div className="rounded-2xl bg-stone-900 p-4 text-white">
+            <p className="text-center text-[12px] font-semibold text-stone-300">
               Each friend keeps the bills to their right
             </p>
             <div className="mt-2 flex justify-center gap-2">
@@ -201,7 +201,7 @@ export default function MultisetDistribute({
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-center text-[12px] text-slate-400">
+            <p className="mt-2 text-center text-[12px] text-stone-400">
               total = ${DOLLARS}
             </p>
           </div>
@@ -210,14 +210,14 @@ export default function MultisetDistribute({
           <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <p className="font-bold">A payout is just a choice of spots.</p>
             <p className="mt-0.5">
-              You picked <b>2 of 7</b> spots for the friends — the bills fall into
+              You picked <b>2 of 7</b> spots for the friends, and the bills fall into
               place. So splitting ${DOLLARS} among 3 friends ={" "}
               <b>C(7, 2) = 21</b> ways. That's choosing with repeats, coming up
               next as <b>stars and bars</b>.
             </p>
             <button
               onClick={reset}
-              className="mt-3 rounded-full bg-slate-200 px-4 py-1.5 text-xs font-bold text-slate-600 transition active:scale-95"
+              className="mt-3 rounded-full bg-stone-200 px-4 py-1.5 text-xs font-bold text-stone-600 transition active:scale-95"
             >
               Try another split
             </button>
@@ -250,8 +250,8 @@ function MoneyCell() {
 function EmptyCell({ active }: { active: boolean }) {
   return (
     <span
-      className={`flex h-12 w-9 items-center justify-center rounded-lg border-2 border-dashed text-slate-300 transition ${
-        active ? "border-brand-400 bg-brand-50" : "border-slate-300 bg-white"
+      className={`flex h-12 w-9 items-center justify-center rounded-lg border-2 border-dashed text-stone-300 transition ${
+        active ? "border-brand-400 bg-brand-50" : "border-stone-300 bg-white"
       }`}
     >
       +

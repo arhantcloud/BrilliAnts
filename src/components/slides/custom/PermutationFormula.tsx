@@ -127,11 +127,11 @@ export default function PermutationFormula({
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "The permutation formula"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         A club of <b>{N}</b> members elects a <b>President</b>, <b>VP</b>, and{" "}
-        <b>Treasurer</b> — three different roles, no one holds two. Picking{" "}
+        <b>Treasurer</b>: three different roles, no one holds two. Picking{" "}
         <b>{K}</b> of <b>{N}</b> in order is a <b>permutation</b>, written{" "}
-        <b>P(n, k)</b>. Here <b>n = {N}</b> and <b>k = {K}</b> — build its
+        <b>P(n, k)</b>. Here <b>n = {N}</b> and <b>k = {K}</b>, so build its
         formula.
       </p>
 
@@ -143,7 +143,7 @@ export default function PermutationFormula({
       >
         {/* Formula */}
         <div className="mt-6 flex items-center justify-center gap-3">
-          <span className="text-2xl font-extrabold text-slate-800">
+          <span className="text-2xl font-extrabold text-stone-800">
             P(n, k) =
           </span>
           <div className="flex flex-col items-center">
@@ -159,9 +159,9 @@ export default function PermutationFormula({
                 />
               ))}
             </div>
-            <div className="h-1 w-full min-w-[170px] rounded bg-slate-800" />
+            <div className="h-1 w-full min-w-[170px] rounded bg-stone-800" />
             <div className="flex items-end gap-1 pt-1.5">
-              <span className="pb-1 text-2xl font-extrabold text-slate-700">(</span>
+              <span className="pb-1 text-2xl font-extrabold text-stone-700">(</span>
               <SlotBox
                 slot={DEN_SLOTS[0]}
                 token={tokenValue(assign[DEN_SLOTS[0].id])}
@@ -169,7 +169,7 @@ export default function PermutationFormula({
                 solved={solved}
                 onClear={() => clearSlot(DEN_SLOTS[0].id)}
               />
-              <span className="pb-1 text-2xl font-extrabold text-slate-700">−</span>
+              <span className="pb-1 text-2xl font-extrabold text-stone-700">−</span>
               <SlotBox
                 slot={DEN_SLOTS[1]}
                 token={tokenValue(assign[DEN_SLOTS[1].id])}
@@ -177,7 +177,7 @@ export default function PermutationFormula({
                 solved={solved}
                 onClear={() => clearSlot(DEN_SLOTS[1].id)}
               />
-              <span className="pb-1 text-2xl font-extrabold text-slate-700">)</span>
+              <span className="pb-1 text-2xl font-extrabold text-stone-700">)</span>
               <SlotBox
                 slot={DEN_SLOTS[2]}
                 token={tokenValue(assign[DEN_SLOTS[2].id])}
@@ -200,7 +200,7 @@ export default function PermutationFormula({
             />
           ))}
           {bankTokens.length === 0 && (
-            <span className="py-2 text-xs text-slate-400">Bank empty</span>
+            <span className="py-2 text-xs text-stone-400">Bank empty</span>
           )}
         </Bank>
 
@@ -211,7 +211,7 @@ export default function PermutationFormula({
 
       {/* Feedback */}
       {solved ? (
-        <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-center text-white">
+        <div className="mt-5 rounded-2xl bg-stone-900 p-5 text-center text-white">
           <p className="animate-fade-in text-xl font-extrabold tracking-wide">
             P({N}, {K}) ={" "}
             <span className="text-brand-300">
@@ -219,7 +219,7 @@ export default function PermutationFormula({
             </span>{" "}
             = {RESULT}
           </p>
-          <p className="mt-2 text-[13px] text-slate-300">
+          <p className="mt-2 text-[13px] text-stone-300">
             {RESULT} ways to fill the {K} officer roles from {N} members.
           </p>
         </div>
@@ -232,8 +232,8 @@ export default function PermutationFormula({
           </p>
         </div>
       ) : (
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Drag tiles into the blanks — or tap a tile to drop it in the next blank.
+        <p className="mt-4 text-center text-xs text-stone-400">
+          Drag tiles into the blanks, or tap a tile to drop it in the next blank.
         </p>
       )}
     </div>
@@ -246,7 +246,7 @@ function Bank({ children }: { children: React.ReactNode }) {
     <div
       ref={setNodeRef}
       className={`mt-6 flex min-h-[64px] flex-wrap items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed p-3 transition ${
-        isOver ? "border-brand-300 bg-brand-50" : "border-slate-200 bg-slate-50"
+        isOver ? "border-brand-300 bg-brand-50" : "border-stone-200 bg-stone-50"
       }`}
     >
       {children}
@@ -269,7 +269,7 @@ function SlotBox({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: slot.id });
 
-  let cls = "border-dashed border-slate-300 bg-white";
+  let cls = "border-dashed border-stone-300 bg-white";
   if (correct === true) cls = "border-emerald-400 bg-emerald-50";
   else if (correct === false) cls = "border-red-400 bg-red-50";
   else if (token) cls = "border-brand-400 bg-brand-50";
@@ -286,7 +286,7 @@ function SlotBox({
         token && !solved ? "cursor-pointer" : "cursor-default"
       }`}
     >
-      <span className={token ? "text-slate-800" : "text-slate-300"}>
+      <span className={token ? "text-stone-800" : "text-stone-300"}>
         {token ?? "?"}
       </span>
     </button>
@@ -326,7 +326,7 @@ function DraggableToken({
 function TokenBody({ value, dragging }: { value: string; dragging?: boolean }) {
   return (
     <div
-      className={`flex h-12 w-11 items-center justify-center rounded-xl border-2 border-slate-200 bg-white text-2xl font-extrabold text-slate-800 ${
+      className={`flex h-12 w-11 items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-2xl font-extrabold text-stone-800 ${
         dragging ? "rotate-3 shadow-xl" : "shadow-sm"
       }`}
     >

@@ -32,7 +32,7 @@ export default function LessonPlayer() {
   if (!lesson) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-        <p className="text-slate-500">Lesson not found.</p>
+        <p className="text-stone-500">Lesson not found.</p>
         <button onClick={() => navigate("/")} className="btn-primary">
           Back to course
         </button>
@@ -64,14 +64,14 @@ export default function LessonPlayer() {
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="text-5xl">🎉</div>
         <h1 className="mt-4 text-2xl font-extrabold">Lesson complete!</h1>
-        <p className="mt-1 text-slate-500">{lesson.title}</p>
+        <p className="mt-1 text-stone-500">{lesson.title}</p>
 
         <div className="mt-6 flex items-center gap-3">
           <div className="card flex flex-col items-center px-5 py-3">
             <span className="text-2xl font-extrabold text-brand-600">
               {stats.currentStreak}
             </span>
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-stone-400">
               day streak 🔥
             </span>
           </div>
@@ -79,7 +79,7 @@ export default function LessonPlayer() {
             <span className="text-2xl font-extrabold text-emerald-600">
               {stats.lessonsCompletedCount}
             </span>
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-stone-400">
               lessons done
             </span>
           </div>
@@ -92,7 +92,7 @@ export default function LessonPlayer() {
               return (
                 <button
                   onClick={() => navigate(`/quiz/${lessonId}`)}
-                  className="btn w-full bg-violet-600 text-white hover:bg-violet-700"
+                  className="btn w-full bg-umber-600 text-white hover:bg-umber-700"
                 >
                   {quizPassed ? "Review the quiz" : "Take the quiz"} →
                 </button>
@@ -107,27 +107,27 @@ export default function LessonPlayer() {
                   <div
                     className={`rounded-2xl p-4 text-left ring-1 ${
                       nextLocked
-                        ? "bg-slate-50 ring-slate-100"
+                        ? "bg-stone-50 ring-stone-100"
                         : "bg-brand-50 ring-brand-100"
                     }`}
                   >
                     <p
                       className={`text-xs font-semibold uppercase tracking-wide ${
-                        nextLocked ? "text-slate-400" : "text-brand-400"
+                        nextLocked ? "text-stone-400" : "text-brand-400"
                       }`}
                     >
                       {nextLocked ? "Locked next" : "Recommended next"}
                     </p>
                     <p
                       className={`mt-1 font-bold ${
-                        nextLocked ? "text-slate-600" : "text-brand-900"
+                        nextLocked ? "text-stone-600" : "text-brand-900"
                       }`}
                     >
                       {nextLesson.title}
                     </p>
                     <p
                       className={`text-sm ${
-                        nextLocked ? "text-slate-500" : "text-brand-700"
+                        nextLocked ? "text-stone-500" : "text-brand-700"
                       }`}
                     >
                       {nextLocked
@@ -164,12 +164,12 @@ export default function LessonPlayer() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="px-4 pb-3 pt-4 sm:px-8">
+      <header className="relative z-[70] bg-[#f7f1ea] px-4 pb-3 pt-4 sm:px-8">
         <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
         <button
           onClick={() => navigate("/")}
           aria-label="Exit lesson"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-stone-400 hover:bg-stone-100"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
             <path
@@ -180,13 +180,13 @@ export default function LessonPlayer() {
             />
           </svg>
         </button>
-        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-stone-200">
           <div
             className="h-full rounded-full bg-brand-500 transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <span className="w-12 text-right text-xs font-bold text-slate-400">
+        <span className="w-12 text-right text-xs font-bold text-stone-400">
           {current + 1}/{total}
         </span>
         </div>
@@ -202,7 +202,7 @@ export default function LessonPlayer() {
         </div>
       </main>
 
-      <footer className="border-t border-slate-100 bg-white px-5 py-4 sm:px-8">
+      <footer className="relative z-[70] border-t border-stone-100 bg-white px-5 py-4 sm:px-8">
         <div className="mx-auto w-full max-w-xl">
         <button
           onClick={onContinue}

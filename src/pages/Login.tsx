@@ -60,20 +60,20 @@ export default function Login() {
         <h1 className="text-2xl font-extrabold tracking-tight">
           Brilli-Ants
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-stone-500">
           Learn to count anything, one short lesson at a time.
         </p>
       </div>
 
       <div className="card p-5">
-        <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-sm font-semibold">
+        <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-stone-100 p-1 text-sm font-semibold">
           <button
             type="button"
             onClick={() => setMode("signup")}
             className={`rounded-lg py-2 transition ${
               mode === "signup"
                 ? "bg-white text-brand-700 shadow-sm"
-                : "text-slate-500"
+                : "text-stone-500"
             }`}
           >
             Create account
@@ -84,7 +84,7 @@ export default function Login() {
             className={`rounded-lg py-2 transition ${
               mode === "signin"
                 ? "bg-white text-brand-700 shadow-sm"
-                : "text-slate-500"
+                : "text-stone-500"
             }`}
           >
             Log in
@@ -93,7 +93,7 @@ export default function Login() {
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-500">
+            <label className="mb-1 block text-xs font-semibold text-stone-500">
               Email
             </label>
             <input
@@ -102,12 +102,12 @@ export default function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-500">
+            <label className="mb-1 block text-xs font-semibold text-stone-500">
               Password
             </label>
             <input
@@ -118,7 +118,7 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               placeholder="At least 6 characters"
             />
           </div>
@@ -140,7 +140,7 @@ export default function Login() {
       </div>
 
       {!firebaseEnabled && (
-        <p className="mt-4 text-center text-xs text-slate-400">
+        <p className="mt-4 text-center text-xs text-stone-400">
           Running in offline mode. Accounts are stored on this device. Add
           Firebase keys in <code>.env</code> for real cross-device sync.
         </p>

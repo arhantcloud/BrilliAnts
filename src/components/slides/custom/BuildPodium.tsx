@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 type Car = { id: string; name: string; color: string };
 
 const CARS: Car[] = [
   { id: "c1", name: "1", color: "bg-rose-500" },
-  { id: "c2", name: "2", color: "bg-sky-500" },
+  { id: "c2", name: "2", color: "bg-brand-500" },
   { id: "c3", name: "3", color: "bg-emerald-500" },
   { id: "c4", name: "4", color: "bg-amber-500" },
-  { id: "c5", name: "5", color: "bg-violet-500" },
+  { id: "c5", name: "5", color: "bg-umber-500" },
 ];
 
 const N = CARS.length; // 5 cars
 const PODIUM = 3; // 1st, 2nd, 3rd
 const PRODUCT = 5 * 4 * 3; // 60
 const PLACES = ["1st", "2nd", "3rd"];
-const FINISH = 80; // slide this far (of 100) and the car auto-crosses the line
+const CROSS_MS = 850; // how long a car takes to race across the line
 
 function car(id: string) {
   return CARS.find((c) => c.id === id)!;
@@ -38,16 +38,17 @@ const ALL_PODIUMS = kPerms(
 
 export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
   const [finished, setFinished] = useState<string[]>([]);
-  const [lockedCount, setLockedCount] = useState(0); // choice terms entered
   const [choiceInput, setChoiceInput] = useState("");
-  const [pos, setPos] = useState<Record<string, number>>({});
+  const [crossingId, setCrossingId] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
   const [solved, setSolved] = useState(false);
 
   const full = finished.length === PODIUM;
-  const awaitingChoice = !full && lockedCount === finished.length;
-  const canSlide = !solved && !full && lockedCount > finished.length;
+  const crossing = crossingId !== null;
+  const awaitingChoice = !full && !crossing && !solved;
   const expected = N - finished.length; // choices for the current spot
+  // One term per spot decided; the new term appears as soon as a car sets off.
+  const lockedCount = finished.length + (crossing ? 1 : 0);
 
   const answerCorrect =
     full && answer.trim() !== "" && Number(answer) === PRODUCT;
@@ -56,23 +57,27 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
     choiceInput.trim() !== "" &&
     Number(choiceInput) !== expected;
 
+  // When a car is sent off, let it drive across the line, then lock it onto the
+  // podium for that spot.
+  useEffect(() => {
+    if (crossingId == null) return;
+    const t = setTimeout(() => {
+      setFinished((f) => [...f, crossingId]);
+      setCrossingId(null);
+    }, CROSS_MS);
+    return () => clearTimeout(t);
+  }, [crossingId]);
+
   function onChoiceChange(raw: string) {
     if (!awaitingChoice || solved) return;
     const digits = raw.replace(/\D/g, "").slice(0, 2);
     setChoiceInput(digits);
     if (digits !== "" && Number(digits) === expected) {
-      setLockedCount(finished.length + 1);
+      // Pick a random car still in the race to take this spot.
+      const remaining = CARS.filter((c) => !finished.includes(c.id));
+      const pick = remaining[Math.floor(Math.random() * remaining.length)];
       setChoiceInput("");
-    }
-  }
-
-  function onSlide(id: string, value: number) {
-    if (!canSlide || finished.includes(id)) return;
-    if (value >= FINISH) {
-      setFinished((f) => [...f, id]);
-      setPos({}); // reset the lanes for the next spot
-    } else {
-      setPos((p) => ({ ...p, [id]: value }));
+      setCrossingId(pick.id);
     }
   }
 
@@ -89,9 +94,8 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
   function reset() {
     if (solved) return;
     setFinished([]);
-    setLockedCount(0);
     setChoiceInput("");
-    setPos({});
+    setCrossingId(null);
     setAnswer("");
   }
 
@@ -103,10 +107,10 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Race to the podium"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Five cars race. How many possible <b>podiums</b> (1st, 2nd, 3rd) are
-        there? For each spot, enter the number of choices, then slide a car
-        across the finish line.
+        there? For each spot, enter how many cars could finish there, a random
+        car then races across the line.
       </p>
 
       {/* Prompt box (top): per-spot choice gate / slide hint */}
@@ -114,7 +118,7 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
         {awaitingChoice && (
           <div className="rounded-2xl border-2 border-brand-200 bg-brand-50 p-4">
             <p className="text-sm font-semibold text-brand-900">
-              {PLACES[finished.length]} place — how many cars could finish here?
+              {PLACES[finished.length]} place: how many cars could finish here?
             </p>
             <div className="mt-2 flex items-center gap-3">
               <input
@@ -130,7 +134,7 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
                     : "border-brand-300 text-brand-700 focus:border-brand-500"
                 }`}
               />
-              <span className="text-[13px] text-slate-500">
+              <span className="text-[13px] text-stone-500">
                 {choiceWrong
                   ? "Count the cars still racing (not yet finished)."
                   : "Type the number of cars still in the race."}
@@ -139,31 +143,31 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
           </div>
         )}
 
-        {canSlide && (
+        {crossing && (
           <p className="animate-fade-in rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-            Now slide a car across the finish line for {PLACES[finished.length]}{" "}
-            place →
+            And they're off! A car is racing across the line for{" "}
+            {PLACES[finished.length]} place →
           </p>
         )}
 
         {full && !solved && (
-          <p className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
-            Podium set — now fill in the total below.
+          <p className="rounded-2xl bg-stone-100 px-4 py-3 text-sm font-semibold text-stone-600">
+            Podium set! Now fill in the total below.
           </p>
         )}
       </div>
 
       {/* Multiplication: typed choices stack up. */}
-      <div className="mt-3 rounded-2xl bg-slate-900 p-5 text-center text-white">
+      <div className="mt-3 rounded-2xl bg-stone-900 p-5 text-center text-white">
         {lockedCount === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-stone-400">
             Enter the choices for 1st place to begin.
           </p>
         ) : (
           <>
             <p className="flex flex-wrap items-center justify-center gap-2 text-2xl font-extrabold tracking-wide">
               <span>{terms.join(" × ")}</span>
-              {!full && <span className="text-slate-500">× …</span>}
+              {!full && <span className="text-stone-500">× …</span>}
               {full && (
                 <>
                   <span>=</span>
@@ -186,72 +190,56 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
                 </>
               )}
             </p>
-            <p className="mt-2 text-[13px] text-slate-300">
+            <p className="mt-2 text-[13px] text-stone-300">
               {solved
-                ? "60 possible podiums = 5 × 4 × 3. Order matters and no car repeats — a permutation."
+                ? "60 possible podiums = 5 × 4 × 3. Order matters and no car repeats, so it's a permutation."
                 : full
                   ? answerCorrect
                     ? ""
                     : answer.trim() === ""
                       ? "Now multiply the choices and fill in the total."
-                      : "Not quite — multiply 5 × 4 × 3."
+                      : "Not quite, multiply 5 × 4 × 3."
                   : "Each spot has one fewer choice than the last."}
             </p>
           </>
         )}
       </div>
 
-      {/* Race track: 5 lanes, slide a car to the finish on the right. */}
-      <div className="relative mt-3 rounded-2xl bg-gradient-to-r from-slate-300 to-slate-100 p-3">
+      {/* Race track: 5 lanes. A random car drives to the line per spot. */}
+      <div className="relative mt-3 rounded-2xl bg-stone-200 p-3">
         <div className="space-y-2">
-          {CARS.map((c) => {
+          {CARS.map((c, i) => {
             const place = finished.indexOf(c.id);
             const isFinished = place >= 0;
-            const value = pos[c.id] ?? 0;
+            const isCrossing = crossingId === c.id;
+            const atLine = isFinished || isCrossing; // parked or driving across
             return (
-              <div key={c.id} className="relative h-9 overflow-hidden rounded-lg">
-                <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-white/70" />
-                {isFinished ? (
-                  <div className="absolute right-4 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1.5">
-                    <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-extrabold text-slate-500">
+              <div key={c.id} className="relative h-9 rounded-lg">
+                <div className="absolute inset-x-1 top-1/2 h-0.5 -translate-y-1/2 bg-white/70" />
+                <div
+                  className="absolute top-1/2 z-10 flex items-center gap-1.5"
+                  style={{
+                    left: atLine ? "calc(100% - 0.55rem)" : "0.25rem",
+                    transform: atLine
+                      ? "translate(-100%, -50%)"
+                      : "translate(0, -50%)",
+                    transition: `left ${CROSS_MS}ms cubic-bezier(0.45,0.05,0.25,1), transform ${CROSS_MS}ms cubic-bezier(0.45,0.05,0.25,1)`,
+                  }}
+                >
+                  {isFinished && (
+                    <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-extrabold text-stone-500 shadow-sm">
                       {PLACES[place]}
                     </span>
-                    <span
-                      className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-sm font-bold text-white ${c.color}`}
-                    >
-                      <span aria-hidden>🏎</span> {c.name}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      className="pointer-events-none absolute top-1/2 z-10"
-                      style={{
-                        left: `${value}%`,
-                        transform: `translate(-${value}%, -50%)`,
-                      }}
-                    >
-                      <span
-                        className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-sm font-bold text-white shadow ${c.color} ${
-                          canSlide ? "" : "opacity-50"
-                        }`}
-                      >
-                        <span aria-hidden>🏎</span> {c.name}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={value}
-                      disabled={!canSlide}
-                      aria-label={`slide car ${c.name} to the finish`}
-                      onChange={(e) => onSlide(c.id, Number(e.target.value))}
-                      className="absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
-                    />
-                  </>
-                )}
+                  )}
+                  <span
+                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-sm font-bold text-white shadow ${c.color} ${
+                      atLine ? "" : "race-rev"
+                    }`}
+                    style={atLine ? undefined : { animationDelay: `${i * 0.13}s` }}
+                  >
+                    <span aria-hidden>🏎</span> {c.name}
+                  </span>
+                </div>
               </div>
             );
           })}
@@ -259,11 +247,11 @@ export default function BuildPodium({ slide, onComplete }: CustomSlideProps) {
         <div className="finish-line absolute bottom-3 right-3 top-3 w-2.5 rounded" />
       </div>
 
-      {/* All possible podiums — highlight the one just built (after solving). */}
+      {/* All possible podiums: highlight the one just built (after solving). */}
       {solved && (
-        <div className="mt-4 animate-fade-in rounded-2xl bg-slate-900 p-4 text-white">
+        <div className="mt-4 animate-fade-in rounded-2xl bg-stone-900 p-4 text-white">
           <div className="flex items-center justify-between">
-            <p className="text-[13px] font-semibold text-slate-300">
+            <p className="text-[13px] font-semibold text-stone-300">
               All possible podiums
             </p>
             <p className="text-[13px] font-bold text-brand-300">

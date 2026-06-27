@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 /**
- * Lesson 5, slide 1 — introduce a multiset: choose K scoops from N flavors,
+ * Lesson 5, slide 1: introduce a multiset: choose K scoops from N flavors,
  * repeats allowed, order ignored. Building a full cup completes the slide; a
  * "shuffle" shows that reordering the scoops is the very same cup.
  */
@@ -51,9 +51,9 @@ export default function MultisetBuild({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Scoops in a cup"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Build a cup of <b>{K} scoops</b> from {FLAVORS.length} flavors. You can
-        repeat a flavor, and the <b>order doesn't matter</b> — a cup is just{" "}
+        repeat a flavor, and the <b>order doesn't matter</b>, a cup is just{" "}
         <i>how many of each flavor</i> you picked. That's a <b>multiset</b>.
       </p>
 
@@ -65,7 +65,7 @@ export default function MultisetBuild({ slide, onComplete }: CustomSlideProps) {
             onClick={() => add(f.id)}
             disabled={solved || full}
             aria-label={`add ${f.name}`}
-            className="flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm transition active:scale-95 disabled:opacity-40"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-stone-200 bg-white px-3 text-sm font-bold text-stone-700 shadow-sm transition active:scale-95 disabled:opacity-40"
           >
             <span className={`h-3.5 w-3.5 rounded-full ${f.dot}`} />+ {f.name}
           </button>
@@ -75,12 +75,12 @@ export default function MultisetBuild({ slide, onComplete }: CustomSlideProps) {
       {/* The cup + the multiset readout */}
       <div className="mt-5 flex items-center justify-center gap-6">
         <div className="flex w-28 flex-col items-center">
-          <span className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <span className="mb-2 text-[11px] font-bold uppercase tracking-wide text-stone-400">
             Your cup
           </span>
           <div className="flex h-24 flex-col-reverse items-center justify-start">
             {scoops.length === 0 && (
-              <span className="text-xs text-slate-300">tap a flavor</span>
+              <span className="text-xs text-stone-300">tap a flavor</span>
             )}
             {scoops.map((id, i) => {
               const f = FLAVORS.find((x) => x.id === id)!;
@@ -96,14 +96,14 @@ export default function MultisetBuild({ slide, onComplete }: CustomSlideProps) {
         </div>
 
         <div className="flex flex-col items-start gap-1.5">
-          <span className="mb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <span className="mb-1 text-[11px] font-bold uppercase tracking-wide text-stone-400">
             How many of each
           </span>
           {FLAVORS.map((f, i) => (
             <div key={f.id} className="flex items-center gap-2 text-sm">
               <span className={`h-3 w-3 rounded-full ${f.dot}`} />
-              <span className="w-20 font-semibold text-slate-600">{f.name}</span>
-              <span className="text-lg font-extrabold text-slate-800">
+              <span className="w-20 font-semibold text-stone-600">{f.name}</span>
+              <span className="text-lg font-extrabold text-stone-800">
                 {counts[i]}
               </span>
             </div>
@@ -115,19 +115,19 @@ export default function MultisetBuild({ slide, onComplete }: CustomSlideProps) {
         <div className="mt-5 animate-fade-in-up rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
           <p className="font-bold">That's one multiset.</p>
           <p className="mt-0.5">
-            The cup is defined only by the counts above — shuffle the scoops and
+            The cup is defined only by the counts above, shuffle the scoops and
             it's still the same cup.
           </p>
           <div className="mt-3 flex gap-2">
             <button
               onClick={shuffle}
-              className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-bold text-white transition active:scale-95"
+              className="rounded-full bg-stone-900 px-4 py-1.5 text-xs font-bold text-white transition active:scale-95"
             >
               Shuffle order
             </button>
             <button
               onClick={reset}
-              className="rounded-full bg-slate-200 px-4 py-1.5 text-xs font-bold text-slate-600 transition active:scale-95"
+              className="rounded-full bg-stone-200 px-4 py-1.5 text-xs font-bold text-stone-600 transition active:scale-95"
             >
               Reset
             </button>

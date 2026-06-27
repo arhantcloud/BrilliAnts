@@ -33,7 +33,7 @@ function nodeClasses(state: NodeState) {
     case "selected":
       return "border-brand-500 bg-brand-50 ring-2 ring-brand-200";
     default:
-      return "border-slate-200 bg-white hover:border-brand-300";
+      return "border-stone-200 bg-white hover:border-brand-300";
   }
 }
 
@@ -146,7 +146,7 @@ export default function ConnectCategories({ slide, onComplete }: CustomSlideProp
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Connect each description to its name"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Each pair of properties names one counting family. Tap a description,
         then tap the name it matches to connect them.
       </p>
@@ -184,10 +184,10 @@ export default function ConnectCategories({ slide, onComplete }: CustomSlideProp
                   aria-label={`${f.order}, ${f.rep}`}
                   className={`relative flex min-h-[64px] flex-col items-start justify-center rounded-xl border-2 px-3 py-2 text-left transition active:scale-[0.98] ${nodeClasses(state)}`}
                 >
-                  <span className="text-[13px] font-bold leading-tight text-slate-800">
+                  <span className="text-[13px] font-bold leading-tight text-stone-800">
                     {f.order}
                   </span>
-                  <span className="text-[12px] font-semibold leading-tight text-slate-500">
+                  <span className="text-[12px] font-semibold leading-tight text-stone-500">
                     {f.rep}
                   </span>
                   <span
@@ -198,7 +198,7 @@ export default function ConnectCategories({ slide, onComplete }: CustomSlideProp
                           ? "bg-red-400"
                           : state === "selected"
                             ? "bg-brand-500"
-                            : "bg-slate-300"
+                            : "bg-stone-300"
                     }`}
                   />
                 </button>
@@ -229,10 +229,10 @@ export default function ConnectCategories({ slide, onComplete }: CustomSlideProp
                           ? "bg-red-400"
                           : state === "selected"
                             ? "bg-brand-500"
-                            : "bg-slate-300"
+                            : "bg-stone-300"
                     }`}
                   />
-                  <span className="text-[14px] font-extrabold text-slate-800">
+                  <span className="text-[14px] font-extrabold text-stone-800">
                     {f.name}
                   </span>
                 </button>
@@ -243,13 +243,13 @@ export default function ConnectCategories({ slide, onComplete }: CustomSlideProp
       </div>
 
       <div className="mt-5 flex items-center justify-between">
-        <span className="text-[13px] font-semibold text-slate-500">
+        <span className="text-[13px] font-semibold text-stone-500">
           {matched} / 4 connected
         </span>
         {!solved && matched > 0 && (
           <button
             onClick={reset}
-            className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-bold text-slate-600 transition active:scale-95"
+            className="rounded-full bg-stone-100 px-4 py-1.5 text-sm font-bold text-stone-600 transition active:scale-95"
           >
             Reset
           </button>
@@ -260,7 +260,7 @@ export default function ConnectCategories({ slide, onComplete }: CustomSlideProp
         <div className="mt-3 animate-fade-in rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           <p className="font-bold">All four matched!</p>
           <p className="mt-0.5">
-            Two yes/no questions — does order matter, and can items repeat —
+            Two yes/no questions (does order matter, and can items repeat)
             decide which of the four families you're counting.
           </p>
         </div>

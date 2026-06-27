@@ -18,15 +18,23 @@ vi.mock("../content/quizzes", async (importOriginal) => {
 
 const drawQuizMock = vi.mocked(drawQuiz);
 
-// The full-run flow test uses a dial-based lesson (Lesson 4 / combinations) so
-// it can drive five questions with the simple digit-dial helper. Lesson 2's
-// permutation styles are exercised directly in src/quiz/quizQuestions.test.tsx.
+// The full-run flow test uses Lesson 4 (combinations) so it can drive five
+// questions with one helper. The combination template is a fill-the-formula
+// derivation; Lesson 2's permutation styles are exercised directly in
+// src/quiz/quizQuestions.test.tsx.
 const LESSON_ID = "l4-comb-no-rep";
 const UID = "tester";
 
-/** A dial-answered (combination-template) question with a known numeric answer. */
+// All five mocked questions share n = 5, k = 2, so the derivation's
+// intermediate blanks are constant: P(5,2) = 20 and 2! = 2.
+const Q_N = 5;
+const Q_K = 2;
+const Q_P = 20;
+const Q_KF = 2;
+
+/** A combination-template question with a known numeric (final) answer. */
 function q(answer: number): GeneratedQuestion {
-  return { params: { n: 5, k: 2, theme: 0 }, answer };
+  return { params: { n: Q_N, k: Q_K, theme: 0 }, answer };
 }
 
 /** Five questions with distinct, known answers. */
@@ -71,24 +79,30 @@ function renderQuiz() {
   );
 }
 
-/** Place-value wheels of the DialAnswer control, left-to-right. */
-const DIAL_PLACES = ["hundreds", "tens", "ones"];
+/** The combination derivation's first textbox, used to detect a mounted question. */
+const FIRST_FIELD = "permutation n";
 
-/** Spin the digit wheels (via their up chevrons) to display `value`. */
-async function setDial(
+/** Fill the combination derivation, getting the final result right or wrong. */
+async function fillCombination(
   user: ReturnType<typeof userEvent.setup>,
-  value: number,
+  question: GeneratedQuestion,
+  correct: boolean,
 ) {
-  const digits = String(value)
-    .padStart(DIAL_PLACES.length, "0")
-    .split("")
-    .map(Number);
-  for (let i = 0; i < digits.length; i++) {
-    const up = screen.getByRole("button", {
-      name: `Increase ${DIAL_PLACES[i]} digit`,
-    });
-    for (let c = 0; c < digits[i]; c++) await user.click(up);
-  }
+  const fill = async (name: string, v: number) =>
+    user.type(screen.getByRole("textbox", { name }), String(v));
+  await fill("permutation n", Q_N);
+  await fill("permutation k", Q_K);
+  await fill("permutation count", Q_P);
+  await fill("k base", Q_K);
+  await fill("k factorial count", Q_KF);
+  await fill("combination n", Q_N);
+  await fill("combination k", Q_K);
+  await fill("numerator", Q_P);
+  await fill("denominator", Q_KF);
+  await fill(
+    "combination result",
+    correct ? Number(question.answer) : Number(question.answer) + 1,
+  );
 }
 
 /** Answer the current question (correct or wrong) and advance to the next slide. */
@@ -98,9 +112,8 @@ async function answerCurrent(
   correct: boolean,
   isLast: boolean,
 ) {
-  await screen.findByRole("button", { name: "Increase ones digit" });
-  const value = correct ? Number(question.answer) : Number(question.answer) + 1;
-  await setDial(user, value);
+  await screen.findByRole("textbox", { name: FIRST_FIELD });
+  await fillCombination(user, question, correct);
   await user.click(screen.getByRole("button", { name: /^submit$/i }));
   await user.click(
     screen.getByRole("button", { name: isLast ? /see results/i : /^next$/i }),
@@ -159,7 +172,7 @@ describe("QuizPlayer", () => {
 
     renderQuiz();
     // Wait for the run to mount (first draw) then finish it.
-    await screen.findByRole("button", { name: "Increase ones digit" });
+    await screen.findByRole("textbox", { name: FIRST_FIELD });
     expect(drawQuizMock).toHaveBeenCalledTimes(1);
 
     await playRun(user, questions, 5);
@@ -169,7 +182,7 @@ describe("QuizPlayer", () => {
 
     // Retake remounts the run, drawing a brand-new set, and returns to Q1.
     expect(
-      await screen.findByRole("button", { name: "Increase ones digit" }),
+      await screen.findByRole("textbox", { name: FIRST_FIELD }),
     ).toBeInTheDocument();
     expect(drawQuizMock).toHaveBeenCalledTimes(2);
     expect(screen.getByText("1/5")).toBeInTheDocument();

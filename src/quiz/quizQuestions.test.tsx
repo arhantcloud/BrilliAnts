@@ -3,15 +3,28 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { quizTemplates } from "./registry";
 import type { QuizQuestionSpec } from "./QuizQuestionSpec";
-import { createRng, permutations, combinations, factorial } from "./rng";
+import { createRng, permutations, combinations, factorial, power, multisets } from "./rng";
 import { drawQuiz } from "../content/quizzes";
 import type { GeneratedQuestion } from "../types";
 
-/** Every template id the framework ships with (see registry.ts). */
+/**
+ * Templates with bespoke answer drivers in this file (classify toggles,
+ * permutation cross-out, combination derivation).
+ */
 const TEMPLATE_IDS = [
   "classify",
   "permutation",
   "combination",
+] as const;
+
+/** Every template id the framework ships with (see registry.ts). */
+const ALL_TEMPLATE_IDS = [
+  "classify",
+  "permutation",
+  "combination",
+  "sequence",
+  "multiset",
+  "distribute",
 ] as const;
 
 /** The four counting "cells" the classify template answers with. */
@@ -137,7 +150,9 @@ async function submitAnswer(
 
 describe("quiz registry", () => {
   it("registers exactly the expected templates", () => {
-    expect(Object.keys(quizTemplates).sort()).toEqual([...TEMPLATE_IDS].sort());
+    expect(Object.keys(quizTemplates).sort()).toEqual(
+      [...ALL_TEMPLATE_IDS].sort(),
+    );
   });
 
   it("each template's id matches its registry key", () => {
@@ -148,7 +163,7 @@ describe("quiz registry", () => {
 });
 
 describe("quiz templates: generate() produces well-formed answers", () => {
-  it.each(TEMPLATE_IDS)(
+  it.each(ALL_TEMPLATE_IDS)(
     "%s yields clean answers across many seeds",
     (id) => {
       const spec = quizTemplates[id];
@@ -177,7 +192,7 @@ describe("quiz templates: generate() produces well-formed answers", () => {
   );
 
   it("is deterministic for a given seed", () => {
-    for (const id of TEMPLATE_IDS) {
+    for (const id of ALL_TEMPLATE_IDS) {
       const spec = quizTemplates[id];
       const a = spec.generate(createRng(99));
       const b = spec.generate(createRng(99));
@@ -367,7 +382,7 @@ describe("quiz templates: submitting answers", () => {
     expect(styles).toEqual([0, 0, 1, 1, 2]);
   });
 
-  it("combination derive gates each sub-problem, then divides to the answer", async () => {
+  it("combination shows every step at once and only grades on submit", async () => {
     const user = userEvent.setup();
     const spec = quizTemplates.combination;
     const n = 6;
@@ -385,33 +400,25 @@ describe("quiz templates: submitting answers", () => {
       />,
     );
 
-    // Step 2 and the division are hidden until P(n,k) is fully correct.
+    // No gating: all three steps' fields are present from the start.
     expect(
-      screen.queryByRole("textbox", { name: "k factorial count" }),
-    ).not.toBeInTheDocument();
-
-    await user.type(screen.getByRole("textbox", { name: "permutation n" }), String(n));
-    await user.type(screen.getByRole("textbox", { name: "permutation k" }), String(k));
-    await user.type(
       screen.getByRole("textbox", { name: "permutation count" }),
-      String(P),
-    );
-
-    // Step 2 appears; the division stays hidden until k! is correct.
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "k factorial count" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("textbox", { name: "combination result" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("textbox", { name: "combination result" }),
+    ).toBeInTheDocument();
 
+    // Submit stays disabled until every box is filled (no early grading).
+    await user.type(screen.getByRole("textbox", { name: "permutation count" }), String(P));
+    expect(screen.getByRole("button", { name: /^submit$/i })).toBeDisabled();
+
+    await user.type(screen.getByRole("textbox", { name: "permutation n" }), String(n));
+    await user.type(screen.getByRole("textbox", { name: "permutation k" }), String(k));
     await user.type(screen.getByRole("textbox", { name: "k base" }), String(k));
-    await user.type(
-      screen.getByRole("textbox", { name: "k factorial count" }),
-      String(kf),
-    );
-
-    // Step 3 appears: every number is a user input.
+    await user.type(screen.getByRole("textbox", { name: "k factorial count" }), String(kf));
     await user.type(screen.getByRole("textbox", { name: "combination n" }), String(n));
     await user.type(screen.getByRole("textbox", { name: "combination k" }), String(k));
     await user.type(screen.getByRole("textbox", { name: "numerator" }), String(P));
@@ -423,6 +430,48 @@ describe("quiz templates: submitting answers", () => {
     expect(onResult).toHaveBeenCalledTimes(1);
     expect(onResult).toHaveBeenCalledWith(true);
     expect(result).toBeDisabled();
+  });
+
+  it("combination scores the whole question wrong if any sub-step is wrong", async () => {
+    const user = userEvent.setup();
+    const spec = quizTemplates.combination;
+    const n = 6;
+    const k = 3;
+    const answer = combinations(n, k);
+    const P = permutations(n, k);
+    const kf = factorial(k);
+    const onResult = vi.fn();
+
+    render(
+      <spec.Component
+        question={{ params: { n, k, theme: 0 }, answer }}
+        locked={false}
+        onResult={onResult}
+      />,
+    );
+
+    // Everything correct EXCEPT step 1's ordered count, so the final result is
+    // still entered correctly, but the question must still fail.
+    await user.type(screen.getByRole("textbox", { name: "permutation n" }), String(n));
+    await user.type(screen.getByRole("textbox", { name: "permutation k" }), String(k));
+    await user.type(
+      screen.getByRole("textbox", { name: "permutation count" }),
+      String(P + 1),
+    );
+    await user.type(screen.getByRole("textbox", { name: "k base" }), String(k));
+    await user.type(screen.getByRole("textbox", { name: "k factorial count" }), String(kf));
+    await user.type(screen.getByRole("textbox", { name: "combination n" }), String(n));
+    await user.type(screen.getByRole("textbox", { name: "combination k" }), String(k));
+    await user.type(screen.getByRole("textbox", { name: "numerator" }), String(P));
+    await user.type(screen.getByRole("textbox", { name: "denominator" }), String(kf));
+    await user.type(
+      screen.getByRole("textbox", { name: "combination result" }),
+      String(answer),
+    );
+    await user.click(screen.getByRole("button", { name: /^submit$/i }));
+
+    expect(onResult).toHaveBeenCalledTimes(1);
+    expect(onResult).toHaveBeenCalledWith(false);
   });
 
   it("combination derive scores false when a final number is wrong", async () => {
@@ -460,7 +509,7 @@ describe("quiz templates: submitting answers", () => {
     }
   });
 
-  it.each(TEMPLATE_IDS)(
+  it.each(ALL_TEMPLATE_IDS)(
     "%s honors the player-driven lock (no interaction when locked)",
     (id) => {
       const spec = quizTemplates[id];
@@ -493,4 +542,142 @@ describe("quiz templates: submitting answers", () => {
       expect(onResult).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("formula-fill templates (sequence, multiset, distribute)", () => {
+  /** Fill a list of [aria-label, value] blanks. */
+  async function fillBlanks(
+    user: ReturnType<typeof userEvent.setup>,
+    blanks: [string, number][],
+  ) {
+    for (const [name, value] of blanks) {
+      await user.type(screen.getByRole("textbox", { name }), String(value));
+    }
+  }
+
+  /** The three blanks (label + correct value) for one generated question. */
+  function blanksFor(id: string, q: GeneratedQuestion): [string, number][] {
+    if (id === "sequence") {
+      const n = Number(q.params.n);
+      const k = Number(q.params.k);
+      return [
+        ["sequence base", n],
+        ["sequence exponent", k],
+        ["sequence result", power(n, k)],
+      ];
+    }
+    if (id === "multiset") {
+      const n = Number(q.params.n);
+      const k = Number(q.params.k);
+      return [
+        ["multiset first part", n + k - 1],
+        ["multiset second part", k],
+        ["multiset result", multisets(n, k)],
+      ];
+    }
+    const items = Number(q.params.items);
+    const bins = Number(q.params.bins);
+    return [
+      ["distribute first part", items + bins - 1],
+      ["distribute second part", bins - 1],
+      ["distribute result", multisets(items, bins)],
+    ];
+  }
+
+  const FORMULA_IDS = ["sequence", "multiset", "distribute"] as const;
+
+  it.each(FORMULA_IDS)(
+    "%s scores true when every blank is filled correctly",
+    async (id) => {
+      const user = userEvent.setup();
+      const spec = quizTemplates[id];
+      const question = spec.generate(createRng(7));
+      const onResult = vi.fn();
+
+      render(
+        <spec.Component question={question} locked={false} onResult={onResult} />,
+      );
+
+      const blanks = blanksFor(id, question);
+      await fillBlanks(user, blanks);
+      await user.click(screen.getByRole("button", { name: /^submit$/i }));
+
+      expect(onResult).toHaveBeenCalledTimes(1);
+      expect(onResult).toHaveBeenCalledWith(true);
+      // Single-attempt lock: Submit is gone and the result blank is frozen.
+      expect(
+        screen.queryByRole("button", { name: /^submit$/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: blanks[2][0] }),
+      ).toBeDisabled();
+    },
+  );
+
+  it.each(FORMULA_IDS)(
+    "%s scores false when the result blank is wrong",
+    async (id) => {
+      const user = userEvent.setup();
+      const spec = quizTemplates[id];
+      const question = spec.generate(createRng(11));
+      const onResult = vi.fn();
+
+      render(
+        <spec.Component question={question} locked={false} onResult={onResult} />,
+      );
+
+      const blanks = blanksFor(id, question);
+      // Fill the two arguments correctly, but the result deliberately wrong.
+      await fillBlanks(user, [blanks[0], blanks[1], [blanks[2][0], blanks[2][1] + 1]]);
+      await user.click(screen.getByRole("button", { name: /^submit$/i }));
+
+      expect(onResult).toHaveBeenCalledTimes(1);
+      expect(onResult).toHaveBeenCalledWith(false);
+    },
+  );
+
+  it.each(FORMULA_IDS)(
+    "%s keeps Submit disabled until every blank is filled",
+    async (id) => {
+      const user = userEvent.setup();
+      const spec = quizTemplates[id];
+      const question = spec.generate(createRng(5));
+      const onResult = vi.fn();
+
+      render(
+        <spec.Component question={question} locked={false} onResult={onResult} />,
+      );
+
+      const blanks = blanksFor(id, question);
+      await user.type(
+        screen.getByRole("textbox", { name: blanks[0][0] }),
+        String(blanks[0][1]),
+      );
+      expect(screen.getByRole("button", { name: /^submit$/i })).toBeDisabled();
+    },
+  );
+});
+
+describe("final-exam draw", () => {
+  it.each(["l3-order-rep", "l5-choice-distribution", "l6-choose-distribute"])(
+    "%s has no standalone quiz (its types live in the final exam)",
+    (lessonId) => {
+      expect(drawQuiz(lessonId, createRng(5))).toHaveLength(0);
+    },
+  );
+
+  it("the course final draws 10 questions across all concept areas", () => {
+    const questions = drawQuiz("course-final", createRng(9));
+    expect(questions).toHaveLength(10);
+    // classify yields a string answer; every other slot is a positive integer.
+    for (const q of questions) {
+      const a = q.answer;
+      if (typeof a === "string") {
+        expect(a.length).toBeGreaterThan(0);
+      } else {
+        expect(Number.isInteger(a)).toBe(true);
+        expect(a).toBeGreaterThan(0);
+      }
+    }
+  });
 });

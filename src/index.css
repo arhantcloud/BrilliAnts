@@ -31,7 +31,7 @@
 .animate-scoopB { animation: scoopB 5.4s ease-in-out infinite; }
 .animate-scoopC { animation: scoopC 5.4s ease-in-out infinite; }
 
-/* Slowly rotating pizza (slide 3) — rotation hints that order doesn't matter. */
+/* Slowly rotating pizza (slide 3): rotation hints that order doesn't matter. */
 @keyframes pizzaspin { to { transform: rotate(360deg); } }
 .animate-pizzaspin { animation: pizzaspin 18s linear infinite; }
 
@@ -43,16 +43,74 @@
 }
 .animate-race { animation: raceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
+/* Idle "revving" wiggle while cars wait at the start line. */
+@keyframes raceRev {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(28px); }
+}
+.race-rev { animation: raceRev 1.1s ease-in-out infinite; }
+
 /* Checkered finish-line strip. */
 .finish-line {
   background-color: #fff;
   background-image:
-    linear-gradient(45deg, #1f2937 25%, transparent 25%),
-    linear-gradient(-45deg, #1f2937 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #1f2937 75%),
-    linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+    linear-gradient(45deg, #4a3528 25%, transparent 25%),
+    linear-gradient(-45deg, #4a3528 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #4a3528 75%),
+    linear-gradient(-45deg, transparent 75%, #4a3528 75%);
   background-size: 14px 14px;
   background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+}
+
+/*
+ * Top-down ant (mascot). Legs swing in two alternating tripod groups for a
+ * crawling gait; antennae sway; footprints fade as the trail ages. transform-box
+ * view-box lets us rotate leg groups around the ant's body center (32,32).
+ */
+@keyframes antLegsA {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes antLegsB {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes antAntennae {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+.ant-legs,
+.ant-antennae {
+  transform-box: view-box;
+}
+.ant-legs {
+  transform-origin: 32px 34px;
+}
+.ant-antennae {
+  transform-origin: 32px 20px;
+}
+.ant-legs-a {
+  animation: antLegsA 1.7s ease-in-out infinite;
+}
+.ant-legs-b {
+  animation: antLegsB 1.7s ease-in-out infinite;
+}
+.ant-antennae {
+  animation: antAntennae 1.6s ease-in-out infinite;
+}
+@keyframes antFootFade {
+  0% { opacity: 0.45; transform: translate(-50%, -50%) rotate(var(--foot-rot)) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--foot-rot)) scale(0.6); }
+}
+.ant-footprint {
+  animation: antFootFade 1.4s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ant-legs-a,
+  .ant-legs-b,
+  .ant-antennae {
+    animation: none;
+  }
 }
 
 :root {
@@ -70,8 +128,8 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background: #f6f8fb;
-  color: #14223a;
+  background: #f7f1ea;
+  color: #3a2a20;
   /* Prevent rubber-band / accidental zoom on mobile while dragging. */
   overscroll-behavior-y: none;
   touch-action: manipulation;
@@ -88,6 +146,6 @@ body {
     @apply btn bg-white text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50;
   }
   .card {
-    @apply rounded-2xl bg-white shadow-sm ring-1 ring-slate-100;
+    @apply rounded-2xl bg-white shadow-sm ring-1 ring-stone-200;
   }
 }

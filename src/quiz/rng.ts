@@ -21,7 +21,7 @@ export function createRng(seed?: number): Rng {
   if (seed === undefined) {
     gen = Math.random;
   } else {
-    // mulberry32 — small, fast, good enough for question variety.
+    // mulberry32: small, fast, good enough for question variety.
     let s = seed >>> 0;
     gen = () => {
       s = (s + 0x6d2b79f5) | 0;
@@ -46,7 +46,7 @@ export function factorial(n: number): number {
   return acc;
 }
 
-/** Permutations P(n, k) = n! / (n - k)! — ordered, no repeats. */
+/** Permutations P(n, k) = n! / (n - k)!, ordered, no repeats. */
 export function permutations(n: number, k: number): number {
   let acc = 1;
   for (let i = 0; i < k; i++) acc *= n - i;
@@ -54,7 +54,7 @@ export function permutations(n: number, k: number): number {
 }
 
 /**
- * Combinations C(n, k) — unordered, no repeats. Computed multiplicatively so
+ * Combinations C(n, k), unordered, no repeats. Computed multiplicatively so
  * the running value stays an exact integer (no factorial overflow / rounding).
  */
 export function combinations(n: number, k: number): number {
@@ -67,7 +67,7 @@ export function combinations(n: number, k: number): number {
   return Math.round(acc);
 }
 
-/** n^k — ordered, with repeats. */
+/** n^k, ordered, with repeats. */
 export function power(n: number, k: number): number {
   return n ** k;
 }

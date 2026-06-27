@@ -5,16 +5,31 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: "#eef6ff",
-          100: "#d9eaff",
-          200: "#bcd9ff",
-          300: "#8ec0ff",
-          400: "#599cff",
-          500: "#3478f6",
-          600: "#1f5be0",
-          700: "#1a49b8",
-          800: "#1b3f93",
-          900: "#1c3974",
+          50: "#fdf5ef",
+          100: "#f9e3d4",
+          200: "#f0c4a8",
+          300: "#e3a079",
+          400: "#d27c4f",
+          500: "#c05f33",
+          600: "#a44a26",
+          700: "#863a20",
+          800: "#6c311f",
+          900: "#57291c",
+        },
+        // Espresso / walnut earthy accent. Replaces the old cool violet/purple
+        // slot so multi-category slides keep a distinct hue that still reads
+        // "ant colony"; the named accent (#4e342b) sits at umber-700.
+        umber: {
+          50: "#f3efec",
+          100: "#e6ddd5",
+          200: "#cdbcb0",
+          300: "#ad9588",
+          400: "#8a6e5f",
+          500: "#6b5044",
+          600: "#574036",
+          700: "#4e342b",
+          800: "#3f2a22",
+          900: "#33221c",
         },
       },
       keyframes: {
@@ -53,20 +68,20 @@ export default {
         // Podium runners swap: slide out right, new color slides in from left.
         // Two swaps per cycle so it loops back to the original color seamlessly.
         swap1: {
-          "0%, 22%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#38bdf8" },
-          "30%": { transform: "translateX(260%)", opacity: "0", backgroundColor: "#38bdf8" },
+          "0%, 22%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#c05f33" },
+          "30%": { transform: "translateX(260%)", opacity: "0", backgroundColor: "#c05f33" },
           "31%": { transform: "translateX(-260%)", opacity: "0", backgroundColor: "#fb7185" },
           "39%, 72%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#fb7185" },
           "80%": { transform: "translateX(260%)", opacity: "0", backgroundColor: "#fb7185" },
-          "81%": { transform: "translateX(-260%)", opacity: "0", backgroundColor: "#38bdf8" },
-          "89%, 100%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#38bdf8" },
+          "81%": { transform: "translateX(-260%)", opacity: "0", backgroundColor: "#c05f33" },
+          "89%, 100%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#c05f33" },
         },
         swap2: {
           "0%, 22%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#fbbf24" },
           "30%": { transform: "translateX(260%)", opacity: "0", backgroundColor: "#fbbf24" },
-          "31%": { transform: "translateX(-260%)", opacity: "0", backgroundColor: "#a78bfa" },
-          "39%, 72%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#a78bfa" },
-          "80%": { transform: "translateX(260%)", opacity: "0", backgroundColor: "#a78bfa" },
+          "31%": { transform: "translateX(-260%)", opacity: "0", backgroundColor: "#b5874b" },
+          "39%, 72%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#b5874b" },
+          "80%": { transform: "translateX(260%)", opacity: "0", backgroundColor: "#b5874b" },
           "81%": { transform: "translateX(-260%)", opacity: "0", backgroundColor: "#fbbf24" },
           "89%, 100%": { transform: "translateX(0)", opacity: "1", backgroundColor: "#fbbf24" },
         },

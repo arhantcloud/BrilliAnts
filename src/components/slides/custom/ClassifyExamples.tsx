@@ -136,7 +136,7 @@ export default function ClassifyExamples({
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Sort each example"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Drag each example into the category it belongs to.
       </p>
 
@@ -152,8 +152,8 @@ export default function ClassifyExamples({
             <DraggableExample key={e.id} example={e} disabled={solved} />
           ))}
           {trayExamples.length === 0 && (
-            <p className="py-3 text-center text-xs text-slate-400">
-              All examples placed — check your answer.
+            <p className="py-3 text-center text-xs text-stone-400">
+              All examples placed. Check your answer.
             </p>
           )}
         </Tray>
@@ -216,7 +216,7 @@ export default function ClassifyExamples({
         <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           <p className="font-bold">All correct!</p>
           <p className="mt-0.5">
-            Two yes/no questions — order and replacement — place every problem.
+            Two yes/no questions (order and replacement) place every problem.
           </p>
         </div>
       )}
@@ -240,7 +240,7 @@ function Tray({ children }: { children: React.ReactNode }) {
     <div
       ref={setNodeRef}
       className={`mt-3 flex min-h-[96px] flex-wrap items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed p-3 transition ${
-        isOver ? "border-brand-300 bg-brand-50" : "border-slate-200 bg-slate-50"
+        isOver ? "border-brand-300 bg-brand-50" : "border-stone-200 bg-stone-50"
       }`}
     >
       {children}
@@ -269,7 +269,7 @@ function DroppableCell({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: cell.id });
 
-  let border = "border-slate-200 bg-white";
+  let border = "border-stone-200 bg-white";
   if (wrong) border = "border-red-400 bg-red-50";
   else if (correct) border = "border-emerald-400 bg-emerald-50";
   else if (isOver) border = "border-brand-400 bg-brand-50";
@@ -282,20 +282,20 @@ function DroppableCell({
       onClick={() => onHoverChange(!showTooltip)}
       className={`relative flex min-h-[120px] flex-col rounded-2xl border-2 p-2 transition ${border}`}
     >
-      <span className="text-center text-[12px] font-bold text-slate-700">
+      <span className="text-center text-[12px] font-bold text-stone-700">
         {cell.name}
       </span>
-      <span className="mb-1.5 text-center text-[9px] font-medium text-slate-400">
+      <span className="mb-1.5 text-center text-[9px] font-medium text-stone-400">
         {cell.props}
       </span>
       <div className="flex flex-1 flex-wrap content-start items-start justify-center gap-1.5">
         {empty && (
-          <span className="mt-2 text-[10px] text-slate-300">Drop here</span>
+          <span className="mt-2 text-[10px] text-stone-300">Drop here</span>
         )}
         {children}
       </div>
       {showTooltip && tooltip && (
-        <div className="absolute inset-x-1 bottom-1 z-10 animate-fade-in rounded-lg bg-slate-900 px-2.5 py-2 text-[11px] font-medium leading-snug text-white shadow-lg">
+        <div className="absolute inset-x-1 bottom-1 z-10 animate-fade-in rounded-lg bg-stone-900 px-2.5 py-2 text-[11px] font-medium leading-snug text-white shadow-lg">
           {tooltip}
         </div>
       )}
@@ -343,14 +343,14 @@ function ExampleCardBody({
 }) {
   return (
     <div
-      className={`rounded-xl border-2 border-slate-200 bg-white ${
+      className={`rounded-xl border-2 border-stone-200 bg-white ${
         dragging ? "rotate-2 shadow-xl" : "shadow-sm"
       } ${placed ? "w-[88px]" : "w-[96px]"}`}
     >
-      <div className="flex h-12 items-center justify-center overflow-hidden rounded-t-[10px] bg-slate-100">
+      <div className="flex h-12 items-center justify-center overflow-hidden rounded-t-[10px] bg-stone-100">
         <example.Visual />
       </div>
-      <p className="px-1 py-1 text-center text-[10px] font-bold leading-tight text-slate-700">
+      <p className="px-1 py-1 text-center text-[10px] font-bold leading-tight text-stone-700">
         {example.label}
       </p>
     </div>
@@ -363,7 +363,7 @@ function DigitReel({ duration, start }: { duration: string; start: number }) {
   // Strip of 0-9 starting at `start`, repeated once so the loop is seamless.
   const single = Array.from({ length: 10 }, (_, i) => (start + i) % 10);
   return (
-    <div className="h-7 w-4 overflow-hidden rounded bg-slate-800">
+    <div className="h-7 w-4 overflow-hidden rounded bg-stone-800">
       <div
         className="flex animate-reel flex-col items-center"
         style={{ animationDuration: duration }}
@@ -396,7 +396,7 @@ function PodiumVisual() {
   // Ranked steps (order matters). Runners swap out/in to hint that a different
   // arrangement is a different outcome. Color comes from the swap keyframe.
   const bars = [
-    { bar: "bg-slate-200", swap: "animate-swap1", h: 22, pos: 2, delay: "0.15s" },
+    { bar: "bg-stone-200", swap: "animate-swap1", h: 22, pos: 2, delay: "0.15s" },
     { bar: "bg-amber-300", swap: "animate-swap2", h: 34, pos: 1, delay: "0s" },
     { bar: "bg-orange-200", swap: "animate-swap3", h: 14, pos: 3, delay: "0.3s" },
   ];
@@ -409,7 +409,7 @@ function PodiumVisual() {
             className={`flex w-4 origin-bottom animate-grow items-start justify-center rounded-t ${b.bar}`}
             style={{ height: `${b.h}px`, animationDelay: b.delay }}
           >
-            <span className="text-[8px] font-bold text-slate-600">{b.pos}</span>
+            <span className="text-[8px] font-bold text-stone-600">{b.pos}</span>
           </div>
         </div>
       ))}
@@ -421,9 +421,9 @@ function TeamVisual() {
   // Five different people; three get chosen (order doesn't matter, no repeats).
   const members = [
     { color: "bg-rose-400", selected: true },
-    { color: "bg-sky-400", selected: false },
+    { color: "bg-brand-400", selected: false },
     { color: "bg-amber-400", selected: true },
-    { color: "bg-violet-400", selected: true },
+    { color: "bg-umber-400", selected: true },
     { color: "bg-emerald-400", selected: false },
   ];
   return (

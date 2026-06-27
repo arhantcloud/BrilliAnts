@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 /**
- * Lesson 5, slide 4 — build the multiset count from the wafer/scoop pieces.
+ * Lesson 5, slide 4: build the multiset count from the wafer/scoop pieces.
  * Step 1: name the pieces in variables (scoops = k, wafers = n − 1). Step 2:
  * drop them into the combination C(wafers + scoops, wafers) = C(k + n − 1,
  * n − 1), whose two arguments are labelled "wafers + scoops" and "wafers".
@@ -66,18 +66,18 @@ export default function MultisetFormula({
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "The multiset formula"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         Now in variables: there are <b>n flavors</b> and you pick <b>k scoops</b>.
         The wafers are the dividers <i>between</i> the flavors. Name each piece,
         then build the count.
       </p>
 
-      {/* Step 1 — name the pieces in variables */}
+      {/* Step 1: name the pieces in variables */}
       <div className="card mt-4 p-4">
-        <p className="text-center text-[11px] font-bold uppercase tracking-wide text-slate-400">
+        <p className="text-center text-[11px] font-bold uppercase tracking-wide text-stone-400">
           In terms of n and k
         </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-lg font-extrabold text-slate-700">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-lg font-extrabold text-stone-700">
           <span className="flex items-center gap-2">
             scoops =
             <VarField
@@ -103,10 +103,10 @@ export default function MultisetFormula({
         </div>
       </div>
 
-      {/* Step 2 — fill in the combination */}
+      {/* Step 2: fill in the combination */}
       {piecesDone && (
-        <div className="mt-3 animate-fade-in-up rounded-2xl bg-slate-900 p-4 text-white">
-          <p className="text-center text-[13px] font-semibold text-slate-200">
+        <div className="mt-3 animate-fade-in-up rounded-2xl bg-stone-900 p-4 text-white">
+          <p className="text-center text-[13px] font-semibold text-stone-200">
             Fill in the combination
           </p>
           <div className="mt-4 flex flex-wrap items-start justify-center gap-2 text-2xl font-extrabold">
@@ -137,7 +137,7 @@ export default function MultisetFormula({
 
           {solved && (
             <p className="mt-4 animate-fade-in rounded-xl bg-emerald-500/15 px-3 py-2 text-center text-[13px] font-semibold text-emerald-300">
-              C(wafers + scoops, wafers) = C(k + n − 1, n − 1) — the number of
+              C(wafers + scoops, wafers) = C(k + n − 1, n − 1), the number of
               multisets.
             </p>
           )}
@@ -177,7 +177,7 @@ function VarField({
       ? "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-400"
       : filled
         ? "bg-red-50 text-red-600 ring-2 ring-red-300"
-        : "bg-white text-slate-800 ring-2 ring-slate-200 focus:ring-brand-400";
+        : "bg-white text-stone-800 ring-2 ring-stone-200 focus:ring-brand-400";
 
   return (
     <span className="flex flex-col items-center gap-1">
@@ -195,7 +195,7 @@ function VarField({
       {label && (
         <span
           className={`text-[10px] font-bold uppercase tracking-wide ${
-            dark ? "text-slate-400" : "text-slate-400"
+            dark ? "text-stone-400" : "text-stone-400"
           }`}
         >
           {label}

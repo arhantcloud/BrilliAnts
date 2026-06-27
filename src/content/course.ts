@@ -180,5 +180,32 @@ export const course: Course = {
         },
       ],
     },
+    {
+      id: "l6-choose-distribute",
+      title: "Choosing = Distributing",
+      summary:
+        "Two sides of one coin: collapsing order links choosing items with distributing them.",
+      estimatedMinutes: 6,
+      slides: [
+        {
+          id: "l6-s1",
+          type: "custom",
+          component: "distribute-bins",
+          title: "Password or pizza?",
+        },
+        {
+          id: "l6-s2",
+          type: "custom",
+          component: "exclusive-bins",
+          title: "Repeats or exclusive?",
+        },
+        {
+          id: "l6-s3",
+          type: "custom",
+          component: "map-distribution",
+          title: "Two languages, one map",
+        },
+      ],
+    },
   ],
 };

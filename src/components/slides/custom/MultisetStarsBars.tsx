@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 /**
- * Lesson 5, slide 3 — the vertical twin of slide 2. A tower has LOCATIONS = 6
+ * Lesson 5, slide 3: the vertical twin of slide 2. A tower has LOCATIONS = 6
  * stacked spots; choosing BARS = 2 of them to be wafer dividers splits the tower
  * into 3 flavors, and scoops fill the remaining 4 spots (a flavor = the scoops
  * sitting just above its bar; the last flavor sits above the top bar). Picking
@@ -117,10 +117,10 @@ export default function MultisetStarsBars({
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Split the tower"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         This tower has <b>{LOCATIONS} stacked spots</b>. Tap <b>{BARS}</b> of
         them to drop in <b>wafer bars</b>. Scoops fill the rest, and the flavor
-        changes at every bar — the top flavor sits above the highest bar.
+        changes at every bar, the top flavor sits above the highest bar.
       </p>
 
       {/* The vertical tower (bottom → top) */}
@@ -138,7 +138,7 @@ export default function MultisetStarsBars({
                 aria-label={`location ${i + 1}`}
                 className="flex items-center gap-2"
               >
-                <span className="w-4 text-right text-[10px] font-bold text-slate-300">
+                <span className="w-4 text-right text-[10px] font-bold text-stone-300">
                   {i + 1}
                 </span>
                 {isBar ? <WaferBar /> : <ScoopLayer color={f.scoop} />}
@@ -150,15 +150,15 @@ export default function MultisetStarsBars({
         <div className="ml-6 h-0 w-0 border-x-[26px] border-t-[40px] border-x-transparent border-t-amber-700" />
       </div>
 
-      <p className="mt-2 text-center text-[12px] font-semibold text-slate-400">
+      <p className="mt-2 text-center text-[12px] font-semibold text-stone-400">
         {placedAll
           ? `${BARS} bars placed · ${FLAVOR_COUNT} flavors`
           : `${BARS - barCount} more bar${BARS - barCount === 1 ? "" : "s"} to place`}
       </p>
 
-      {/* Step 1 — read off the split (dark readout box, like slide 2) */}
+      {/* Step 1: read off the split (dark readout box, like slide 2) */}
       {placedAll && (
-        <div className="mt-4 animate-fade-in-up rounded-2xl bg-slate-900 p-4 text-white">
+        <div className="mt-4 animate-fade-in-up rounded-2xl bg-stone-900 p-4 text-white">
           <div className="flex flex-wrap items-end justify-center gap-4">
             <Field
               label="scoops"
@@ -175,7 +175,7 @@ export default function MultisetStarsBars({
               solved={splitDone}
             />
           </div>
-          <p className="mt-3 text-center text-[13px] text-slate-300">
+          <p className="mt-3 text-center text-[13px] text-stone-300">
             {splitDone
               ? `${SCOOPS} scoops and ${BARS} bars fill the ${LOCATIONS} spots.`
               : "With the bars in, how many scoops and how many bars fill the tower?"}
@@ -183,10 +183,10 @@ export default function MultisetStarsBars({
         </div>
       )}
 
-      {/* Step 2 — count the towers with the combination formula */}
+      {/* Step 2: count the towers with the combination formula */}
       {splitDone && (
-        <div className="mt-3 animate-fade-in-up rounded-2xl bg-slate-900 p-4 text-white">
-          <p className="text-center text-[13px] font-semibold text-slate-200">
+        <div className="mt-3 animate-fade-in-up rounded-2xl bg-stone-900 p-4 text-white">
+          <p className="text-center text-[13px] font-semibold text-stone-200">
             How many ice cream towers are possible?
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-2xl font-extrabold">
@@ -218,12 +218,12 @@ export default function MultisetStarsBars({
               {result ?? "?"}
             </span>
           </div>
-          <p className="mt-2 text-center text-[12px] text-slate-400">
+          <p className="mt-2 text-center text-[12px] text-stone-400">
             total spots = wafers + scoops; choose which spots are wafers.
           </p>
           {solved && (
             <p className="mt-3 rounded-xl bg-emerald-500/15 px-3 py-2 text-center text-[13px] font-semibold text-emerald-300">
-              {result} possible ice creams — every tower is one way to choose the{" "}
+              {result} possible ice creams, every tower is one way to choose the{" "}
               {BARS} wafer spots out of {TOTAL}.
             </p>
           )}
@@ -276,7 +276,7 @@ function Field({
 }) {
   return (
     <span className="flex flex-col items-center gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+      <span className="text-[10px] font-bold uppercase tracking-wide text-stone-400">
         {label}
       </span>
       <input

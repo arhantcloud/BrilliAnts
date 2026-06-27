@@ -2,11 +2,11 @@ import { useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 /**
- * Lesson 4, slide 1 — two phases in one:
+ * Lesson 4, slide 1: two phases in one:
  *   1. Pick a 3-person team from 5 friends (a combination). Choosing the third
  *      LOCKS the team.
  *   2. Build every ordering of that locked team. All 3! = 6 orderings are the
- *      same team — which is exactly why a combination divides out the orderings.
+ *      same team, which is exactly why a combination divides out the orderings.
  * Completes once all six orderings are built and the learner enters 3! = 6.
  */
 
@@ -14,9 +14,9 @@ type Person = { id: string; name: string; color: string };
 
 const PEOPLE: Person[] = [
   { id: "ana", name: "Ana", color: "bg-rose-400" },
-  { id: "bo", name: "Bo", color: "bg-sky-400" },
+  { id: "bo", name: "Bo", color: "bg-brand-400" },
   { id: "cy", name: "Cy", color: "bg-amber-400" },
-  { id: "di", name: "Di", color: "bg-violet-400" },
+  { id: "di", name: "Di", color: "bg-umber-400" },
   { id: "eve", name: "Eve", color: "bg-emerald-400" },
 ];
 
@@ -127,7 +127,7 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
       <h2 className="text-xl font-extrabold leading-tight">
         {slide.title ?? "Pick a team, then order it"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         {locked ? (
           <>
             Locked in: <b>{team.map((p) => p.name).join(", ")}</b>. These three are
@@ -137,12 +137,12 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
         ) : (
           <>
             Pick any <b>{K}</b> of these 5 friends for a team. Order doesn't
-            matter — a team is just a <i>set</i>. The third pick locks it in.
+            matter, a team is just a <i>set</i>. The third pick locks it in.
           </>
         )}
       </p>
 
-      {/* Phase 1 — choose the team */}
+      {/* Phase 1: choose the team */}
       <div className="mt-5 flex flex-wrap justify-center gap-2.5">
         {PEOPLE.map((p) => {
           const on = picked.includes(p.id);
@@ -168,16 +168,16 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
       </div>
 
       {!locked ? (
-        <p className="mt-4 text-center text-xs text-slate-400">
-          {picked.length}/{K} picked — tap {K - picked.length} more.
+        <p className="mt-4 text-center text-xs text-stone-400">
+          {picked.length}/{K} picked, tap {K - picked.length} more.
         </p>
       ) : (
         <>
-          <p className="mt-4 text-center text-[13px] text-slate-500">
+          <p className="mt-4 text-center text-[13px] text-stone-500">
             Same three people, in any order.
           </p>
 
-          {/* Phase 2 — build every ordering */}
+          {/* Phase 2: build every ordering */}
           <div className="mt-4 flex justify-center gap-2.5">
             {team.map((p) => {
               const used = slots.includes(p.id);
@@ -203,7 +203,7 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
                 className={`flex h-12 w-16 items-center justify-center rounded-xl border-2 text-sm font-bold ${
                   s
                     ? "border-brand-300 bg-brand-50 text-brand-700"
-                    : "border-dashed border-slate-300 bg-white text-slate-300"
+                    : "border-dashed border-stone-300 bg-white text-stone-300"
                 }`}
               >
                 {s ? nameOf(s) : i + 1}
@@ -222,7 +222,7 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
             <button
               onClick={resetRow}
               disabled={solved || slots.every((s) => s === null)}
-              className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-bold text-slate-500 transition active:scale-95 disabled:opacity-40"
+              className="rounded-full bg-stone-100 px-4 py-1.5 text-sm font-bold text-stone-500 transition active:scale-95 disabled:opacity-40"
             >
               Reset
             </button>
@@ -237,23 +237,23 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
 
           {dup && !solved && (
             <p className="mt-2 text-center text-xs font-semibold text-amber-600">
-              You already have that ordering — try a different arrangement.
+              You already have that ordering. Try a different arrangement.
             </p>
           )}
 
           <div className="mt-4">
-            <p className="mb-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            <p className="mb-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-stone-400">
               Orderings found · {found.length} / {TOTAL}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {found.map((k) => (
                 <div
                   key={k}
-                  className="flex animate-pop-in items-center justify-center gap-1 rounded-xl border-2 border-slate-100 bg-white p-2 text-xs font-bold text-slate-600"
+                  className="flex animate-pop-in items-center justify-center gap-1 rounded-xl border-2 border-stone-100 bg-white p-2 text-xs font-bold text-stone-600"
                 >
                   {k.split("-").map((id, i) => (
                     <span key={id} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-slate-300">→</span>}
+                      {i > 0 && <span className="text-stone-300">→</span>}
                       {nameOf(id)}
                     </span>
                   ))}
@@ -262,13 +262,13 @@ export default function SelectTeam({ slide, onComplete }: CustomSlideProps) {
               {Array.from({ length: TOTAL - found.length }).map((_, i) => (
                 <div
                   key={`empty-${i}`}
-                  className="min-h-[40px] rounded-xl border-2 border-dashed border-slate-100 bg-slate-50"
+                  className="min-h-[40px] rounded-xl border-2 border-dashed border-stone-100 bg-stone-50"
                 />
               ))}
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-slate-900 p-5 text-center text-white">
+          <div className="mt-4 rounded-2xl bg-stone-900 p-5 text-center text-white">
             <p className="text-base font-extrabold text-brand-200">
               Every team has k! orderings.
             </p>
@@ -317,7 +317,7 @@ function Field({
 }) {
   return (
     <span className="flex flex-col items-center gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+      <span className="text-[10px] font-bold uppercase tracking-wide text-stone-400">
         {label}
       </span>
       <input

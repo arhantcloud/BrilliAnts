@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { CustomSlideProps } from "./registry";
 
 /**
- * Lesson 5, slide 5 (capstone) — a multiset count from scratch: choose k donuts
+ * Lesson 5, slide 5 (capstone): a multiset count from scratch: choose k donuts
  * from n flavors, repeats allowed, order ignored. Count = C(k + n − 1, n − 1).
  */
 
@@ -85,8 +85,8 @@ export default function MultisetBox({ slide, onComplete }: CustomSlideProps) {
       <h2 className="mt-2 text-xl font-extrabold leading-tight">
         {slide.title ?? "The donut box"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
-        A bakery has <b>{n}</b> flavors. You grab a box of <b>{k}</b> donuts —
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
+        A bakery has <b>{n}</b> flavors. You grab a box of <b>{k}</b> donuts,
         repeats are fine and the order in the box doesn't matter. How many
         different boxes (multisets) are possible?
       </p>
@@ -107,20 +107,20 @@ export default function MultisetBox({ slide, onComplete }: CustomSlideProps) {
             >
               <div className="m-auto mt-2.5 h-2.5 w-2.5 rounded-full bg-white" />
             </div>
-            <span className="text-[10px] font-bold text-slate-400">
+            <span className="text-[10px] font-bold text-stone-400">
               {f.name}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Readout — substitute n, k into the combination, then compute */}
-      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-white">
-        <p className="text-center text-[12px] font-semibold text-slate-300">
+      {/* Readout: substitute n, k into the combination, then compute */}
+      <div className="mt-5 rounded-2xl bg-stone-900 p-5 text-white">
+        <p className="text-center text-[12px] font-semibold text-stone-300">
           Fill in the combination, then count the boxes
         </p>
         <div className="mt-3 space-y-2 text-xl font-extrabold tracking-wide">
-          <p className="text-center text-slate-200">C(k + n − 1, n − 1)</p>
+          <p className="text-center text-stone-200">C(k + n − 1, n − 1)</p>
           <p className="flex flex-wrap items-center justify-center gap-2">
             <span>= C(</span>
             <NumInput
@@ -164,7 +164,7 @@ export default function MultisetBox({ slide, onComplete }: CustomSlideProps) {
           <p className="font-bold">Lesson 5 complete</p>
           <p className="mt-0.5">
             {total} possible boxes. Choosing with repeats while ignoring order is
-            a <b>multiset</b>, counted by stars and bars — the fourth and final
+            a <b>multiset</b>, counted by stars and bars, the fourth and final
             counting world. Nice work finishing the map!
           </p>
         </div>
@@ -227,12 +227,12 @@ function Stepper({
       <button
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={disabled || value <= min}
-        className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl font-bold text-slate-600 transition active:scale-90 disabled:opacity-40"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-600 transition active:scale-90 disabled:opacity-40"
       >
         −
       </button>
       <div className="flex min-w-[72px] flex-col items-center">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-stone-400">
           {label}
         </span>
         <span className="text-3xl font-extrabold text-brand-600">{value}</span>
@@ -240,7 +240,7 @@ function Stepper({
       <button
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={disabled || value >= max}
-        className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl font-bold text-slate-600 transition active:scale-90 disabled:opacity-40"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-600 transition active:scale-90 disabled:opacity-40"
       >
         +
       </button>

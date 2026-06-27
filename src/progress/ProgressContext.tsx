@@ -7,16 +7,19 @@ import {
 } from "react";
 import { useAuth } from "../auth/auth-context";
 import { course } from "../content/course";
-import { getLessonQuiz } from "../content/quizzes";
+import { FINAL_QUIZ_ID, getLessonQuiz } from "../content/quizzes";
 import { emptyStats, loadUserData, saveUserData } from "../data/persistence";
 import type {
   LessonProgress,
   LessonStatus,
+  Mistake,
+  MistakeMap,
   ProgressMap,
   QuizResult,
   QuizResultMap,
   QuizStatus,
   UserStats,
+  WrongQuestion,
 } from "../types";
 import {
   PASS_THRESHOLD,
@@ -24,8 +27,16 @@ import {
   type ProgressContextValue,
 } from "./progress-context";
 
+/** Dev account: every lesson and quiz is unlocked regardless of progress. */
+const DEV_EMAIL = "ghdv@gmail.com";
+
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  // Local calendar date (yyyy-mm-dd) so the streak follows the user's day, not UTC.
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function daysBetween(a: string, b: string): number {
@@ -51,12 +62,35 @@ function bestPercent(result: QuizResult | undefined): number {
   return (result.bestCorrect / result.total) * 100;
 }
 
+/** Build a stored Mistake (ant) from a captured wrong question. */
+function makeMistake(
+  lessonId: string,
+  wrong: WrongQuestion,
+  index: number,
+): Mistake {
+  const mistake: Mistake = {
+    id: `${lessonId}:${Date.now()}:${index}:${Math.random()
+      .toString(36)
+      .slice(2, 7)}`,
+    lessonId,
+    templateId: wrong.templateId,
+    createdAt: Date.now(),
+  };
+  // Avoid writing `undefined` (Firestore rejects undefined field values).
+  if (wrong.style !== undefined) mistake.style = wrong.style;
+  if (wrong.params !== undefined) mistake.params = wrong.params;
+  if (wrong.answer !== undefined) mistake.answer = wrong.answer;
+  return mistake;
+}
+
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const devMode = user?.email?.trim().toLowerCase() === DEV_EMAIL;
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<ProgressMap>({});
   const [quizzes, setQuizzes] = useState<QuizResultMap>({});
   const [stats, setStats] = useState<UserStats>({ ...emptyStats });
+  const [mistakes, setMistakes] = useState<MistakeMap>({});
   const uidRef = useRef<string | null>(null);
 
   // Mirror the latest state so persist() can always write a consistent, full
@@ -64,6 +98,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const progressRef = useRef<ProgressMap>(progress);
   const quizzesRef = useRef<QuizResultMap>(quizzes);
   const statsRef = useRef<UserStats>(stats);
+  const mistakesRef = useRef<MistakeMap>(mistakes);
   // Keep the mirrors in sync after each commit so persist() can always read the
   // latest full snapshot. (Done in an effect, not during render, so we never
   // mutate a ref while rendering.)
@@ -71,7 +106,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     progressRef.current = progress;
     quizzesRef.current = quizzes;
     statsRef.current = stats;
-  }, [progress, quizzes, stats]);
+    mistakesRef.current = mistakes;
+  }, [progress, quizzes, stats, mistakes]);
 
   useEffect(() => {
     let active = true;
@@ -85,12 +121,14 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           progress: {} as ProgressMap,
           quizzes: {} as QuizResultMap,
           stats: { ...emptyStats },
+          mistakes: {} as MistakeMap,
         });
     load.then((data) => {
       if (!active) return;
       setProgress(data.progress);
       setQuizzes(data.quizzes);
       setStats(data.stats);
+      setMistakes(data.mistakes);
       setLoading(false);
     });
     return () => {
@@ -103,6 +141,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       nextProgress: ProgressMap,
       nextQuizzes: QuizResultMap,
       nextStats: UserStats,
+      nextMistakes: MistakeMap,
     ) => {
       const uid = uidRef.current;
       if (!uid) return;
@@ -110,6 +149,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         progress: nextProgress,
         quizzes: nextQuizzes,
         stats: nextStats,
+        mistakes: nextMistakes,
       });
     },
     [],
@@ -121,6 +161,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       if (index < 0) return "locked";
       const own = progress[lessonId];
       if (own?.status === "completed") return "completed";
+      // Dev mode: nothing is ever gated; reflect real progress otherwise.
+      if (devMode) {
+        return own?.status === "in_progress" ? "in_progress" : "available";
+      }
       const prevLesson = index > 0 ? course.lessons[index - 1] : null;
       const prevCompleted =
         prevLesson != null &&
@@ -135,7 +179,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       if (!unlocked) return "locked";
       return own?.status === "in_progress" ? "in_progress" : "available";
     },
-    [progress, quizzes],
+    [progress, quizzes, devMode],
   );
 
   const resumeIndex = useCallback(
@@ -172,7 +216,12 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
               lessonsCompletedCount: nextStats.lessonsCompletedCount + 1,
             };
           }
-          persist(nextProgress, quizzesRef.current, nextStats);
+          persist(
+            nextProgress,
+            quizzesRef.current,
+            nextStats,
+            mistakesRef.current,
+          );
           return nextStats;
         });
 
@@ -191,16 +240,31 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     (lessonId: string): QuizStatus => {
       // Lessons without a quiz never expose one.
       if (getLessonQuiz(lessonId) == null) return "locked";
-      if (progress[lessonId]?.status !== "completed") return "locked";
+      if (lessonId === FINAL_QUIZ_ID) {
+        // The final exam unlocks once every lesson is completed (dev mode skips
+        // the gate). It does not require the per-lesson quizzes to be passed.
+        const allDone = course.lessons.every(
+          (l) => progress[l.id]?.status === "completed",
+        );
+        if (!devMode && !allDone) return "locked";
+      } else if (!devMode && progress[lessonId]?.status !== "completed") {
+        // Normally a lesson quiz needs its lesson completed first.
+        return "locked";
+      }
       const result = quizzes[lessonId];
       if (!result || result.attempts <= 0) return "available";
       return bestPercent(result) >= PASS_THRESHOLD ? "passed" : "failed";
     },
-    [progress, quizzes],
+    [progress, quizzes, devMode],
   );
 
   const recordQuizAttempt = useCallback(
-    (lessonId: string, correct: number, total: number) => {
+    (
+      lessonId: string,
+      correct: number,
+      total: number,
+      wrong: WrongQuestion[] = [],
+    ) => {
       setQuizzes((prevQuizzes) => {
         const prev = prevQuizzes[lessonId];
         const prevPct = bestPercent(prev);
@@ -217,9 +281,20 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           [lessonId]: entry,
         };
 
+        // A new high score replaces this lesson's ants with the wrong questions
+        // from this attempt; otherwise the existing colony is left untouched.
+        const isNewBest = !keepPrevBest;
+        const nextMistakes: MistakeMap = isNewBest
+          ? {
+              ...mistakesRef.current,
+              [lessonId]: wrong.map((w, i) => makeMistake(lessonId, w, i)),
+            }
+          : mistakesRef.current;
+        if (isNewBest) setMistakes(nextMistakes);
+
         setStats((prevStats) => {
           const nextStats = bumpStreak(prevStats);
-          persist(progressRef.current, nextQuizzes, nextStats);
+          persist(progressRef.current, nextQuizzes, nextStats, nextMistakes);
           return nextStats;
         });
 
@@ -229,20 +304,68 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  const resolveMistake = useCallback(
+    (lessonId: string, mistakeId: string) => {
+      const prevMistakes = mistakesRef.current;
+      const list = prevMistakes[lessonId] ?? [];
+      if (!list.some((m) => m.id === mistakeId)) return;
+      const nextMistakes: MistakeMap = {
+        ...prevMistakes,
+        [lessonId]: list.filter((m) => m.id !== mistakeId),
+      };
+
+      // Recover one quiz point: best score +1, capped at the quiz length.
+      const prevResult = quizzesRef.current[lessonId];
+      const nextQuizzes: QuizResultMap = prevResult
+        ? {
+            ...quizzesRef.current,
+            [lessonId]: {
+              ...prevResult,
+              bestCorrect: Math.min(
+                prevResult.total,
+                prevResult.bestCorrect + 1,
+              ),
+              updatedAt: Date.now(),
+            },
+          }
+        : quizzesRef.current;
+
+      const nextStats = bumpStreak(statsRef.current);
+
+      setMistakes(nextMistakes);
+      setQuizzes(nextQuizzes);
+      setStats(nextStats);
+      persist(progressRef.current, nextQuizzes, nextStats, nextMistakes);
+    },
+    [persist],
+  );
+
+  const mistakeCount = useCallback(
+    (lessonId: string): number => mistakes[lessonId]?.length ?? 0,
+    [mistakes],
+  );
+  const totalMistakes = Object.values(mistakes).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  );
+
   const completedCount = course.lessons.filter(
     (l) => progress[l.id]?.status === "completed",
   ).length;
 
-  // Only lessons that actually have a quiz contribute to the course-wide points.
-  const quizPointsEarned = course.lessons.reduce(
-    (sum, l) =>
-      sum + (getLessonQuiz(l.id) ? (quizzes[l.id]?.bestCorrect ?? 0) : 0),
-    0,
-  );
-  const quizPointsTotal = course.lessons.reduce(
-    (sum, l) => sum + (getLessonQuiz(l.id)?.questionCount ?? 0),
-    0,
-  );
+  // Lessons with a quiz plus the end-of-course final exam contribute to the
+  // course-wide points.
+  const quizPointsEarned =
+    course.lessons.reduce(
+      (sum, l) =>
+        sum + (getLessonQuiz(l.id) ? (quizzes[l.id]?.bestCorrect ?? 0) : 0),
+      0,
+    ) + (quizzes[FINAL_QUIZ_ID]?.bestCorrect ?? 0);
+  const quizPointsTotal =
+    course.lessons.reduce(
+      (sum, l) => sum + (getLessonQuiz(l.id)?.questionCount ?? 0),
+      0,
+    ) + (getLessonQuiz(FINAL_QUIZ_ID)?.questionCount ?? 0);
 
   const value: ProgressContextValue = {
     loading,
@@ -255,6 +378,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     quizResult,
     quizStatus,
     recordQuizAttempt,
+    mistakes,
+    mistakeCount,
+    totalMistakes,
+    resolveMistake,
     completedCount,
     totalLessons: course.lessons.length,
     quizPointsEarned,

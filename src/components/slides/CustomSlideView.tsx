@@ -12,7 +12,7 @@ export default function CustomSlideView({
 
   if (!Component) {
     return (
-      <p className="text-slate-500">
+      <p className="text-stone-500">
         Unknown slide component: <code>{slide.component}</code>
       </p>
     );

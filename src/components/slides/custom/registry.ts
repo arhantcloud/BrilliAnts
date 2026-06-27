@@ -22,6 +22,9 @@ import MultisetDistribute from "./MultisetDistribute";
 import MultisetStarsBars from "./MultisetStarsBars";
 import MultisetFormula from "./MultisetFormula";
 import MultisetBox from "./MultisetBox";
+import DistributeBins from "./DistributeBins";
+import ExclusiveBins from "./ExclusiveBins";
+import MapDistribution from "./MapDistribution";
 
 /** Props every custom slide component receives. */
 export type CustomSlideProps = {
@@ -46,20 +49,24 @@ export const customSlideRegistry: Record<
   "factorials": Factorials,
   "permute-k": PermuteK,
   "permutation-formula": PermutationFormula,
-  // Lesson 3 — Order matters, with reuse (nᵏ)
+  // Lesson 3: Order matters, with reuse (nᵏ)
   "refill-choices": RefillChoices,
   "power-explorer": PowerExplorer,
   "reuse-compare": ReuseCompare,
   "crack-the-code": CrackTheCode,
-  // Lesson 4 — Order doesn't matter, no reuse (combinations)
+  // Lesson 4: Order doesn't matter, no reuse (combinations)
   "select-team": SelectTeam,
   "collapse-orderings": CollapseOrderings,
   "combination-formula": CombinationFormula,
   "handshake-party": HandshakeParty,
-  // Lesson 5 — Order doesn't matter, with reuse (multisets / stars and bars)
+  // Lesson 5: Order doesn't matter, with reuse (multisets / stars and bars)
   "multiset-build": MultisetBuild,
   "multiset-distribute": MultisetDistribute,
   "multiset-stars-bars": MultisetStarsBars,
   "multiset-formula": MultisetFormula,
   "multiset-box": MultisetBox,
+  // Lesson 6: Choosing = Distributing
+  "distribute-bins": DistributeBins,
+  "exclusive-bins": ExclusiveBins,
+  "map-distribution": MapDistribution,
 };

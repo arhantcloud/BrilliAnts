@@ -75,7 +75,7 @@ export default function CrackTheCode({ slide, onComplete }: CustomSlideProps) {
       <h2 className="mt-2 text-xl font-extrabold leading-tight">
         {slide.title ?? "Crack the code"}
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">
+      <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         A combination padlock has <b>k</b> spinning dials, each showing a digit{" "}
         <b>0–9</b> (ten options, and digits can repeat). How many secret codes
         could it hide? Set the dials, then lock it in.
@@ -86,12 +86,12 @@ export default function CrackTheCode({ slide, onComplete }: CustomSlideProps) {
         <button
           onClick={() => changeK(Math.max(MIN_K, k - 1))}
           disabled={solved || k <= MIN_K}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl font-bold text-slate-600 transition active:scale-90 disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-600 transition active:scale-90 disabled:opacity-40"
         >
           −
         </button>
         <div className="flex min-w-[64px] flex-col items-center">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-stone-400">
             dials (k)
           </span>
           <span className="text-3xl font-extrabold text-brand-600">{k}</span>
@@ -99,14 +99,14 @@ export default function CrackTheCode({ slide, onComplete }: CustomSlideProps) {
         <button
           onClick={() => changeK(Math.min(MAX_K, k + 1))}
           disabled={solved || k >= MAX_K}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl font-bold text-slate-600 transition active:scale-90 disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-600 transition active:scale-90 disabled:opacity-40"
         >
           +
         </button>
       </div>
 
       {/* The padlock */}
-      <div className="mx-auto mt-5 w-fit rounded-3xl bg-gradient-to-b from-slate-700 to-slate-900 p-4 shadow-2xl ring-1 ring-black/20">
+      <div className="mx-auto mt-5 w-fit rounded-3xl bg-gradient-to-b from-stone-700 to-stone-900 p-4 shadow-2xl ring-1 ring-black/20">
         <div className="mb-3 flex items-center justify-center gap-1.5">
           {Array.from({ length: k }, (_, i) => (
             <LockDial
@@ -123,14 +123,14 @@ export default function CrackTheCode({ slide, onComplete }: CustomSlideProps) {
               solved ? "bg-emerald-400" : "animate-pulse bg-amber-400"
             }`}
           />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
             {solved ? "Locked" : "Spinning"}
           </span>
         </div>
       </div>
 
-      {/* Readout — fill in the base, exponent, and the count */}
-      <div className="mt-5 rounded-2xl bg-slate-900 p-5 text-center text-white">
+      {/* Readout: fill in the base, exponent, and the count */}
+      <div className="mt-5 rounded-2xl bg-stone-900 p-5 text-center text-white">
         <div className="flex flex-wrap items-start justify-center gap-2">
           <div className="flex items-start">
             {solved ? (
@@ -194,7 +194,7 @@ export default function CrackTheCode({ slide, onComplete }: CustomSlideProps) {
               <b>
                 n<sup>k</sup>
               </b>{" "}
-              in action — the signature of <i>order matters, with reuse</i>.
+              in action, the signature of <i>order matters, with reuse</i>.
             </p>
           </div>
         </div>
@@ -208,8 +208,8 @@ function GrowthChart({ upTo }: { upTo: number }) {
   // exponential explosion reads clearly.
   const ks = Array.from({ length: upTo }, (_, i) => i + 1);
   return (
-    <div className="rounded-2xl border-2 border-slate-100 bg-white p-4">
-      <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-400">
+    <div className="rounded-2xl border-2 border-stone-100 bg-white p-4">
+      <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-wide text-stone-400">
         Codes per number of dials
       </p>
       <div className="flex items-end justify-center gap-3">
@@ -219,7 +219,7 @@ function GrowthChart({ upTo }: { upTo: number }) {
             <div key={kk} className="flex flex-col items-center gap-1">
               <span
                 className={`text-[10px] font-bold ${
-                  isLast ? "text-brand-600" : "text-slate-400"
+                  isLast ? "text-brand-600" : "text-stone-400"
                 }`}
               >
                 {(10 ** kk).toLocaleString()}
@@ -230,7 +230,7 @@ function GrowthChart({ upTo }: { upTo: number }) {
                 }`}
                 style={{ height: `${10 + kk * 16}px` }}
               />
-              <span className="text-[10px] font-bold text-slate-500">{kk}</span>
+              <span className="text-[10px] font-bold text-stone-500">{kk}</span>
             </div>
           );
         })}
@@ -250,14 +250,14 @@ function LockDial({
 }) {
   if (solved) {
     return (
-      <div className="flex h-12 w-9 items-center justify-center rounded-md bg-gradient-to-b from-slate-100 to-slate-300 text-2xl font-extrabold text-slate-900 ring-1 ring-slate-500">
+      <div className="flex h-12 w-9 items-center justify-center rounded-md bg-gradient-to-b from-stone-100 to-stone-300 text-2xl font-extrabold text-stone-900 ring-1 ring-stone-500">
         {digit}
       </div>
     );
   }
   const strip = Array.from({ length: N }, (_, i) => i);
   return (
-    <div className="h-12 w-9 overflow-hidden rounded-md bg-gradient-to-b from-slate-200 to-slate-400 shadow-inner ring-1 ring-slate-500">
+    <div className="h-12 w-9 overflow-hidden rounded-md bg-gradient-to-b from-stone-200 to-stone-400 shadow-inner ring-1 ring-stone-500">
       <div
         className="flex animate-reel flex-col items-center"
         style={{ animationDuration: duration }}
@@ -265,7 +265,7 @@ function LockDial({
         {[...strip, ...strip].map((d, i) => (
           <span
             key={i}
-            className="flex h-12 w-9 items-center justify-center text-2xl font-extrabold text-slate-800"
+            className="flex h-12 w-9 items-center justify-center text-2xl font-extrabold text-stone-800"
           >
             {d}
           </span>
