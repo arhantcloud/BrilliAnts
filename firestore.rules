@@ -8,6 +8,7 @@ service cloud.firestore {
     //     quizzes:  { [lessonId]: QuizResult },
     //     stats:    UserStats,
     //     mistakes: { [lessonId]: Mistake[] },
+    //     antArmy:  { [topicId]: ArmyAnt[] },
     //   }
     // (see src/data/persistence.ts and src/types.ts)
 
@@ -38,15 +39,22 @@ service cloud.firestore {
       return m is map && m.size() <= 200;
     }
 
+    // Validates the antArmy map of topicId -> ArmyAnt[] (the Ant Army base).
+    function isValidAntArmy(a) {
+      // One anthill per topic (6 today); cap generously to prevent abuse.
+      return a is map && a.size() <= 50;
+    }
+
     // Validates the resulting user document (works for create and merge-update,
     // since request.resource.data is the full post-write document).
     function isValidUserDoc(data) {
-      return data.keys().hasOnly(['progress', 'quizzes', 'stats', 'mistakes'])
+      return data.keys().hasOnly(['progress', 'quizzes', 'stats', 'mistakes', 'antArmy'])
         // Cap collection size to prevent storage abuse / DoS.
         && (!('progress' in data) || (data.progress is map && data.progress.size() <= 200))
         && (!('quizzes' in data) || isValidQuizzes(data.quizzes))
         && (!('stats' in data) || isValidStats(data.stats))
-        && (!('mistakes' in data) || isValidMistakes(data.mistakes));
+        && (!('mistakes' in data) || isValidMistakes(data.mistakes))
+        && (!('antArmy' in data) || isValidAntArmy(data.antArmy));
     }
 
     match /users/{uid} {

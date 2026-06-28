@@ -113,6 +113,31 @@
   }
 }
 
+/*
+ * Ant Army: a soft gold glow that pulses around an ant whose upgrade is ready,
+ * and a slow shimmer for max-rank generals / grand fortress accents.
+ */
+@keyframes armyReady {
+  0%, 100% { filter: drop-shadow(0 0 1px rgba(245, 197, 66, 0.65)); }
+  50% { filter: drop-shadow(0 0 7px rgba(245, 197, 66, 0.95)); }
+}
+.army-ready {
+  animation: armyReady 1.6s ease-in-out infinite;
+}
+@keyframes armyShimmer {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.army-shimmer {
+  animation: armyShimmer 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .army-ready,
+  .army-shimmer {
+    animation: none;
+  }
+}
+
 :root {
   color-scheme: light;
 }

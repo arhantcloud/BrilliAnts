@@ -1,101 +1,18 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/auth-context";
 import { useProgress } from "../progress/progress-context";
 import { course } from "../content/course";
 import { FINAL_QUIZ_ID, getLessonQuiz } from "../content/quizzes";
 import { shortTitle } from "../content/shortTitles";
+import AntArmy from "../army/AntArmy";
+import CourseBadge from "../army/CourseBadge";
+import Avatar from "../profile/Avatar";
+import ProfilePanel from "../profile/ProfilePanel";
+import { useProfile } from "../profile/profile-context";
 import type { LessonStatus } from "../types";
 
 type QuizStatus = "locked" | "available" | "passed" | "failed";
-
-/** Sunday-first day initials for the weekly streak row. */
-const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
-
-function localDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function isoToday(): string {
-  return localDateStr(new Date());
-}
-
-function addDays(iso: string, n: number): string {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return localDateStr(d);
-}
-
-/**
- * Weekly streak row: a hole for each day of the current week (Sun → Sat). Days
- * that fall inside the active streak window (the `currentStreak` consecutive
- * days ending on `lastActiveDate`) are filled green; today is ringed.
- */
-function WeekStreak({
-  currentStreak,
-  lastActiveDate,
-}: {
-  currentStreak: number;
-  lastActiveDate: string | null;
-}) {
-  const today = isoToday();
-  const dow = new Date(today + "T00:00:00").getDay();
-  const weekStart = addDays(today, -dow);
-  const streakStart =
-    lastActiveDate && currentStreak > 0
-      ? addDays(lastActiveDate, -(currentStreak - 1))
-      : null;
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(weekStart, i);
-    // A day is filled only if it's inside the streak window AND not in the future.
-    const completed = Boolean(
-      streakStart &&
-        lastActiveDate &&
-        date >= streakStart &&
-        date <= lastActiveDate &&
-        date <= today,
-    );
-    return { date, letter: DAY_LETTERS[i], completed, isToday: date === today };
-  });
-
-  return (
-    <div
-      className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5"
-      aria-label={`Daily streak: ${currentStreak} day${currentStreak === 1 ? "" : "s"}`}
-    >
-      {days.map((d, i) => (
-        <div key={i} className="flex flex-col items-center gap-0.5">
-          <span className="text-[9px] font-bold uppercase leading-none text-brand-100/80">
-            {d.letter}
-          </span>
-          <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full transition ${
-              d.completed
-                ? "bg-lime-500 text-brand-900 shadow-sm"
-                : "bg-brand-900/40 shadow-inner ring-1 ring-inset ring-white/10"
-            } ${d.isToday ? "ring-2 ring-white" : ""}`}
-          >
-            {d.completed && (
-              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" aria-hidden>
-                <path
-                  d="M5 13l4 4L19 7"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function StatusBadge({ status }: { status: LessonStatus }) {
   const map: Record<LessonStatus, { label: string; cls: string }> = {
@@ -207,12 +124,13 @@ function QuizIcon({ status }: { status: QuizStatus }) {
 
 export default function CoursePath() {
   const navigate = useNavigate();
-  const { user, logOut } = useAuth();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const [showProfile, setShowProfile] = useState(false);
   const {
     lessonStatus,
     completedCount,
     totalLessons,
-    stats,
     loading,
     quizStatus,
     quizResult,
@@ -253,9 +171,10 @@ export default function CoursePath() {
 
   return (
     <div className="flex h-full flex-col">
+      {showProfile && <ProfilePanel onClose={() => setShowProfile(false)} />}
       <header className="bg-brand-700 px-5 pb-6 pt-8 text-white sm:px-8">
         <div className="mx-auto w-full max-w-5xl">
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-100">
               Your course
@@ -265,15 +184,15 @@ export default function CoursePath() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <WeekStreak
-              currentStreak={stats.currentStreak}
-              lastActiveDate={stats.lastActiveDate}
-            />
+            <CourseBadge />
             <button
-              onClick={() => logOut()}
-              className="text-xs font-semibold text-brand-100 underline-offset-2 hover:underline"
+              type="button"
+              onClick={() => setShowProfile(true)}
+              className="rounded-full transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white/70"
+              aria-label="Open profile"
+              title={profile.username || "Profile"}
             >
-              Log out
+              <Avatar antColor={profile.antColor} bgColor={profile.bgColor} size={40} />
             </button>
           </div>
         </div>
@@ -311,7 +230,8 @@ export default function CoursePath() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-8">
+      <main className="flex-1 overflow-y-auto">
+        <div className="px-5 py-5 sm:px-8 sm:py-8">
         <div className="mx-auto w-full max-w-5xl">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-stretch">
         {pendingQuizLesson && (
@@ -361,15 +281,26 @@ export default function CoursePath() {
         )}
 
         {!pendingQuizLesson && !nextLesson && (
-          <div className="w-full rounded-2xl bg-lime-50 p-5 text-center ring-1 ring-lime-100 sm:flex-1">
-            <p className="text-2xl">🎉</p>
-            <p className="mt-1 font-bold text-lime-800">
-              You finished the course!
+          <button
+            onClick={() =>
+              document
+                .getElementById("ant-army")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="w-full rounded-2xl bg-[#4d7a30] p-5 text-left text-white shadow-md transition active:scale-[0.99] sm:flex-1"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-lime-100">
+              Course complete
             </p>
-            <p className="text-sm text-lime-700">
-              Revisit any lesson to sharpen your skills.
+            <p className="mt-1 text-lg font-bold">Train your Ant Army</p>
+            <p className="mt-0.5 text-sm text-lime-50/90">
+              Recruit ants from your answers and promote them through harder
+              challenges.
             </p>
-          </div>
+            <span className="mt-3 inline-block rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#4d7a30]">
+              Go to Ant Army →
+            </span>
+          </button>
         )}
 
         <button
@@ -546,10 +477,15 @@ export default function CoursePath() {
             </span>
           )}
         </button>
+        </div>
+        </div>
 
-        <p className="mt-6 text-center text-xs text-stone-400">
-          Signed in as {user?.email}
-        </p>
+        <AntArmy />
+
+        <div className="px-5 pb-8 sm:px-8">
+          <p className="mx-auto mt-6 w-full max-w-5xl text-center text-xs text-stone-400">
+            Signed in as {user?.email}
+          </p>
         </div>
       </main>
     </div>

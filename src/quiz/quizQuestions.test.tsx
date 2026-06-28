@@ -570,9 +570,9 @@ describe("formula-fill templates (sequence, multiset, distribute)", () => {
       const n = Number(q.params.n);
       const k = Number(q.params.k);
       return [
-        ["multiset first part", n + k - 1],
-        ["multiset second part", k],
-        ["multiset result", multisets(n, k)],
+        ["multiset first part", k + n - 1],
+        ["multiset second part", n - 1],
+        ["multiset result", multisets(k, n)],
       ];
     }
     const items = Number(q.params.items);

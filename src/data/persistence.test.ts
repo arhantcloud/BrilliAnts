@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { emptyStats, loadUserData, saveUserData } from "./persistence";
-import type { ProgressMap, UserStats } from "../types";
+import type { AntArmyMap, ProgressMap, UserStats } from "../types";
 
 describe("persistence (offline / localStorage mode)", () => {
   beforeEach(() => localStorage.clear());
@@ -46,5 +46,37 @@ describe("persistence (offline / localStorage mode)", () => {
     const data = await loadUserData("corrupt");
     expect(data.progress).toEqual({});
     expect(data.stats).toEqual(emptyStats);
+    expect(data.antArmy).toEqual({});
+  });
+
+  it("defaults antArmy to an empty map for an unknown user", async () => {
+    const data = await loadUserData("nobody");
+    expect(data.antArmy).toEqual({});
+  });
+
+  it("round-trips the Ant Army map", async () => {
+    const antArmy: AntArmyMap = {
+      "l1-two-questions": [
+        {
+          id: "ant-1",
+          rank: 1,
+          lastRankChange: "2026-06-20",
+          lastRankChangeAt: 1_700_000_000_000,
+          attemptDate: "2026-06-21",
+          attemptsUsed: 1,
+        },
+      ],
+    };
+
+    await saveUserData("army-user", {
+      progress: {},
+      quizzes: {},
+      stats: { ...emptyStats },
+      mistakes: {},
+      antArmy,
+    });
+    const loaded = await loadUserData("army-user");
+
+    expect(loaded.antArmy).toEqual(antArmy);
   });
 });

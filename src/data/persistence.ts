@@ -1,6 +1,7 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, firebaseEnabled } from "../firebase";
 import type {
+  AntArmyMap,
   MistakeMap,
   ProgressMap,
   QuizResultMap,
@@ -18,6 +19,7 @@ export type UserData = {
   quizzes: QuizResultMap;
   stats: UserStats;
   mistakes: MistakeMap;
+  antArmy: AntArmyMap;
 };
 
 const localKey = (uid: string) => `cc_userdata_${uid}`;
@@ -32,12 +34,19 @@ function readLocal(uid: string): UserData {
         quizzes: data.quizzes ?? {},
         stats: data.stats ?? { ...emptyStats },
         mistakes: data.mistakes ?? {},
+        antArmy: data.antArmy ?? {},
       };
     }
   } catch {
     /* ignore */
   }
-  return { progress: {}, quizzes: {}, stats: { ...emptyStats }, mistakes: {} };
+  return {
+    progress: {},
+    quizzes: {},
+    stats: { ...emptyStats },
+    mistakes: {},
+    antArmy: {},
+  };
 }
 
 function writeLocal(uid: string, data: UserData) {
@@ -55,9 +64,16 @@ export async function loadUserData(uid: string): Promise<UserData> {
         quizzes: data.quizzes ?? {},
         stats: data.stats ?? { ...emptyStats },
         mistakes: data.mistakes ?? {},
+        antArmy: data.antArmy ?? {},
       };
     }
-    return { progress: {}, quizzes: {}, stats: { ...emptyStats }, mistakes: {} };
+    return {
+      progress: {},
+      quizzes: {},
+      stats: { ...emptyStats },
+      mistakes: {},
+      antArmy: {},
+    };
   }
   return readLocal(uid);
 }
@@ -68,7 +84,14 @@ export async function saveUserData(
 ): Promise<void> {
   if (firebaseEnabled && db) {
     const ref = doc(db, "users", uid);
-    await setDoc(ref, data, { merge: true });
+    // Write the full snapshot deterministically (no array-merge surprises) so
+    // the stored document always equals our in-memory state — this mirrors the
+    // local-storage path and guarantees ant ranks/timers persist exactly.
+    try {
+      await setDoc(ref, data);
+    } catch (err) {
+      console.error("Failed to save user data to Firestore:", err);
+    }
     return;
   }
   writeLocal(uid, data);

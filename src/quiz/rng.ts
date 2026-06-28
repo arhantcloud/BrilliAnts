@@ -79,3 +79,11 @@ export function power(n: number, k: number): number {
 export function multisets(items: number, bins: number): number {
   return combinations(items + bins - 1, bins - 1);
 }
+
+/**
+ * Circular permutations of `n` distinct items around a ring = (n - 1)!.
+ * Rotations of the same cycle count once (there is no fixed "first" seat).
+ */
+export function circular(n: number): number {
+  return factorial(Math.max(0, n - 1));
+}

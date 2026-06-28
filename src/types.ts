@@ -144,3 +144,35 @@ export type WrongQuestion = {
 
 /** Status of a lesson's post-lesson quiz, derived from progress + results. */
 export type QuizStatus = "locked" | "available" | "failed" | "passed";
+
+/**
+ * Rank of an ant in the Ant Army base. Ants are recruited as workers and earn
+ * promotions by passing harder, distinctly-formatted upgrade challenges.
+ *  - 0 = worker
+ *  - 1 = warrior
+ *  - 2 = general (max rank)
+ */
+export type AntRank = 0 | 1 | 2;
+
+/**
+ * One soldier in a topic's anthill. Recruited from correct quiz answers (quiz
+ * topics) or a topic's recruit button (button topics), then upgraded one rank at
+ * a time. Upgrades are gated to once per calendar day: after each promotion (or
+ * the initial recruit) the ant must wait until the next day, and gets at most
+ * two upgrade attempts per eligible day.
+ */
+export type ArmyAnt = {
+  id: string;
+  rank: AntRank;
+  /** yyyy-mm-dd of recruit or last promotion; gates the one-day wait. */
+  lastRankChange: string;
+  /** ms timestamp of recruit/last promotion, for the smooth countdown ring. */
+  lastRankChangeAt: number;
+  /** yyyy-mm-dd the daily attempts were last spent (null if never). */
+  attemptDate: string | null;
+  /** Upgrade attempts used on `attemptDate` (resets each new day). */
+  attemptsUsed: number;
+};
+
+/** Map of topic (lesson) id -> the ants stationed at its anthill. */
+export type AntArmyMap = Record<string, ArmyAnt[]>;

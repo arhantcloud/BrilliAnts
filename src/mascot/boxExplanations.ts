@@ -354,24 +354,25 @@ export function multisetBoxes(c: MultCtx): {
   bottom: BoxInfo;
   res: BoxInfo;
 } {
-  const top = c.n + c.k - 1;
+  const top = c.k + c.n - 1;
+  const bottom = c.n - 1;
   return {
     top: {
       id: "mult-top",
-      title: "C(n + k − 1, k): the top",
-      text: `Add the ${c.n} ${c.kind} and ${c.k} ${c.pick}, then subtract 1: n + k − 1 = ${c.n} + ${c.k} − 1 = ${top}.`,
-      ai: multAi(c, "top n + k − 1", top),
+      title: "C(k + n − 1, n − 1): the top",
+      text: `Add the ${c.k} ${c.pick} and ${c.n} ${c.kind}, then subtract 1: k + n − 1 = ${c.k} + ${c.n} − 1 = ${top}.`,
+      ai: multAi(c, "top k + n − 1", top),
     },
     bottom: {
       id: "mult-bottom",
-      title: "C(n + k − 1, k): the k",
-      text: `The bottom is how many ${c.pick} you choose: k = ${c.k}.`,
-      ai: multAi(c, "bottom k", c.k),
+      title: "C(k + n − 1, n − 1): the n − 1",
+      text: `The bottom is the dividers between the ${c.kind}: n − 1 = ${c.n} − 1 = ${bottom}.`,
+      ai: multAi(c, "bottom n − 1", bottom),
     },
     res: {
       id: "mult-res",
       title: "The result",
-      text: `C(${top}, ${c.k}) = ${c.answer.toLocaleString()}.`,
+      text: `C(${top}, ${bottom}) = ${c.answer.toLocaleString()}.`,
       ai: multAi(c, "result", c.answer),
     },
   };

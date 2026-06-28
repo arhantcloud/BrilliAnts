@@ -12,14 +12,20 @@ export default function AntSvg({
   mood = "encouraging",
   walking = true,
   className,
+  bodyColor,
+  bodyDarkColor,
 }: {
   mood?: AntMood;
   /** When false the legs hold still (only the head/antennae keep moving). */
   walking?: boolean;
   className?: string;
+  /** Override the abdomen/head colour (e.g. for Ant Army ranks). */
+  bodyColor?: string;
+  /** Override the thorax/dark colour. */
+  bodyDarkColor?: string;
 }) {
-  const body = "#a44a26"; // brand-600
-  const bodyDark = "#57291c"; // brand-900
+  const body = bodyColor ?? "#a44a26"; // brand-600
+  const bodyDark = bodyDarkColor ?? "#57291c"; // brand-900
   const limb = "#3a2017";
   const accent = mood === "celebrate" ? "#fbbf24" : "#e3a079"; // brand-300
 

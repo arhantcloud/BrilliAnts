@@ -1,5 +1,7 @@
 import { createContext, useContext } from "react";
 import type {
+  AntArmyMap,
+  AntRank,
   LessonStatus,
   MistakeMap,
   ProgressMap,
@@ -58,6 +60,35 @@ export type ProgressContextValue = {
    * point for that lesson (best score +1, capped at the quiz length).
    */
   resolveMistake: (lessonId: string, mistakeId: string) => void;
+  /** Ants stationed at each topic's anthill in the Ant Army base. */
+  antArmy: AntArmyMap;
+  /**
+   * The anthill's visual tier = the lowest rank among its ants (0 if empty).
+   * The hill upgrades once every ant reaches warrior, then again at general.
+   */
+  anthillTier: (topicId: string) => AntRank;
+  /** Recruit one worker into a button topic's anthill (caller gates on a correct answer). */
+  recruitAnt: (topicId: string) => void;
+  /**
+   * Apply one upgrade attempt to an ant. `bothCorrect` promotes it one rank and
+   * starts a fresh one-day wait; otherwise it spends one of the day's attempts.
+   * Re-checks eligibility, so a stale UI cannot over-spend attempts.
+   */
+  attemptAntUpgrade: (
+    topicId: string,
+    antId: string,
+    bothCorrect: boolean,
+  ) => void;
+  /**
+   * TESTING ONLY: mutate a single ant, bypassing the wait/attempt gates.
+   *  - "ready": make it immediately eligible to upgrade.
+   *  - "upgrade": promote it one rank right now.
+   */
+  devMutateAnt: (
+    topicId: string,
+    antId: string,
+    mode: "ready" | "upgrade",
+  ) => void;
   completedCount: number;
   totalLessons: number;
   /** Sum of best correct answers across all lesson quizzes. */

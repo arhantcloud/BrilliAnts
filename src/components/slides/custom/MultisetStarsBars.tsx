@@ -60,6 +60,15 @@ export default function MultisetStarsBars({
   const flavorIndex = (i: number) =>
     Math.min(bars.slice(0, i).filter(Boolean).length, FLAVORS.length - 1);
 
+  // How many scoops each flavor collects (the scoops sitting above its wafer),
+  // mirroring how each friend kept the cash to their right on the last slide.
+  const scoopsPerFlavor = Array.from({ length: FLAVOR_COUNT }, (_, fi) =>
+    bars.reduce(
+      (acc, isBar, i) => acc + (!isBar && flavorIndex(i) === fi ? 1 : 0),
+      0,
+    ),
+  );
+
   function toggle(i: number) {
     if (splitDone) return;
     setBars((prev) => {
@@ -119,46 +128,77 @@ export default function MultisetStarsBars({
       </h2>
       <p className="mt-2 text-[15px] leading-relaxed text-stone-700">
         This tower has <b>{LOCATIONS} stacked spots</b>. Tap <b>{BARS}</b> of
-        them to drop in <b>wafer bars</b>. Scoops fill the rest, and the flavor
-        changes at every bar, the top flavor sits above the highest bar.
+        them to drop in <b>wafer bars</b>. Scoops fill the rest, and a new flavor
+        starts above every wafer — so the number of wafers is always{" "}
+        <b>one fewer than the flavors</b> ({BARS} wafers → {FLAVOR_COUNT}{" "}
+        flavors).
       </p>
 
-      {/* The vertical tower (bottom → top) */}
-      <div className="mt-5 flex flex-col items-center">
-        <div className="flex w-48 flex-col-reverse gap-1">
-          {Array.from({ length: LOCATIONS }, (_, i) => {
-            const isBar = bars[i];
-            const f = FLAVORS[flavorIndex(i)];
-            const canTap = !splitDone && (isBar || barCount < BARS);
-            return (
-              <button
-                key={i}
-                onClick={() => toggle(i)}
-                disabled={!canTap}
-                aria-label={`location ${i + 1}`}
-                className="flex items-center gap-2"
-              >
-                <span className="w-4 text-right text-[10px] font-bold text-stone-300">
-                  {i + 1}
-                </span>
-                {isBar ? <WaferBar /> : <ScoopLayer color={f.scoop} />}
-              </button>
-            );
-          })}
+      {/* The vertical tower (bottom → top), with a callback to the friends slide */}
+      <div className="mt-5 flex items-center justify-center gap-4">
+        <div className="flex flex-col items-center">
+          <div className="flex w-48 flex-col-reverse gap-1">
+            {Array.from({ length: LOCATIONS }, (_, i) => {
+              const isBar = bars[i];
+              const f = FLAVORS[flavorIndex(i)];
+              const canTap = !splitDone && (isBar || barCount < BARS);
+              return (
+                <button
+                  key={i}
+                  onClick={() => toggle(i)}
+                  disabled={!canTap}
+                  aria-label={`location ${i + 1}`}
+                  className="flex items-center gap-2"
+                >
+                  <span className="w-4 text-right text-[10px] font-bold text-stone-300">
+                    {i + 1}
+                  </span>
+                  {isBar ? <WaferBar /> : <ScoopLayer color={f.scoop} />}
+                </button>
+              );
+            })}
+          </div>
+          {/* Cone base */}
+          <div className="ml-6 h-0 w-0 border-x-[26px] border-t-[40px] border-x-transparent border-t-amber-700" />
         </div>
-        {/* Cone base */}
-        <div className="ml-6 h-0 w-0 border-x-[26px] border-t-[40px] border-x-transparent border-t-amber-700" />
+
+        <aside className="max-w-[9rem] rounded-xl bg-rose-50 p-3 text-[11px] leading-snug text-rose-900 ring-1 ring-rose-100">
+          Remember the <b>friends</b> from the last slide? Each <b>flavor</b> is
+          like a friend who keeps the scoops above their wafer. The wafers are
+          just the dividers between friends — so there's always{" "}
+          <b>one fewer wafer than flavors</b>.
+        </aside>
       </div>
 
       <p className="mt-2 text-center text-[12px] font-semibold text-stone-400">
         {placedAll
-          ? `${BARS} bars placed · ${FLAVOR_COUNT} flavors`
+          ? `${BARS} wafers = ${FLAVOR_COUNT} flavors − 1`
           : `${BARS - barCount} more bar${BARS - barCount === 1 ? "" : "s"} to place`}
       </p>
 
       {/* Step 1: read off the split (dark readout box, like slide 2) */}
       {placedAll && (
         <div className="mt-4 animate-fade-in-up rounded-2xl bg-stone-900 p-4 text-white">
+          {/* Each flavor's haul, just like each friend's payout last slide */}
+          <p className="text-center text-[12px] font-semibold text-stone-300">
+            Each flavor keeps the scoops above its wafer
+          </p>
+          <div className="mb-3 mt-2 flex justify-center gap-2">
+            {scoopsPerFlavor.map((cnt, fi) => (
+              <div
+                key={fi}
+                className="flex flex-1 flex-col items-center rounded-xl bg-white/10 py-2"
+              >
+                <span className={`h-5 w-5 rounded-full ${FLAVORS[fi].dot}`} />
+                <span className="mt-1 text-[11px] font-semibold text-stone-200">
+                  {FLAVORS[fi].name}
+                </span>
+                <span className="text-base font-extrabold text-emerald-300">
+                  {cnt} {cnt === 1 ? "scoop" : "scoops"}
+                </span>
+              </div>
+            ))}
+          </div>
           <div className="flex flex-wrap items-end justify-center gap-4">
             <Field
               label="scoops"

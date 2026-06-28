@@ -10,6 +10,9 @@ import { course } from "../content/course";
 import { FINAL_QUIZ_ID, getLessonQuiz } from "../content/quizzes";
 import { emptyStats, loadUserData, saveUserData } from "../data/persistence";
 import type {
+  AntArmyMap,
+  AntRank,
+  ArmyAnt,
   LessonProgress,
   LessonStatus,
   Mistake,
@@ -22,6 +25,19 @@ import type {
   WrongQuestion,
 } from "../types";
 import {
+  anthillCap,
+  computeAnthillTier,
+  isQuizTopic,
+  neighborsAllowGeneral,
+} from "../army/config";
+import {
+  attemptsUsedToday,
+  isEligible,
+  MAX_RANK,
+  UPGRADE_WAIT_MS,
+} from "../army/antState";
+import { daysBetween, todayStr } from "../army/dates";
+import {
   PASS_THRESHOLD,
   ProgressContext,
   type ProgressContextValue,
@@ -29,21 +45,6 @@ import {
 
 /** Dev account: every lesson and quiz is unlocked regardless of progress. */
 const DEV_EMAIL = "ghdv@gmail.com";
-
-function todayStr(): string {
-  // Local calendar date (yyyy-mm-dd) so the streak follows the user's day, not UTC.
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function daysBetween(a: string, b: string): number {
-  const da = new Date(a + "T00:00:00");
-  const db = new Date(b + "T00:00:00");
-  return Math.round((db.getTime() - da.getTime()) / 86400000);
-}
 
 function bumpStreak(stats: UserStats): UserStats {
   const today = todayStr();
@@ -83,6 +84,43 @@ function makeMistake(
   return mistake;
 }
 
+/** A freshly recruited worker ant for a topic's anthill. */
+function makeArmyAnt(topicId: string, index: number): ArmyAnt {
+  const now = Date.now();
+  return {
+    id: `${topicId}:army:${now}:${index}:${Math.random()
+      .toString(36)
+      .slice(2, 7)}`,
+    rank: 0,
+    // Recruited ants wait one calendar day before their first upgrade.
+    lastRankChange: todayStr(),
+    lastRankChangeAt: now,
+    attemptDate: null,
+    attemptsUsed: 0,
+  };
+}
+
+/**
+ * Ensure a quiz topic's anthill holds `desiredWorkers` ants (capped). Only ever
+ * ADDS workers, so existing ranks/timers are preserved; because best score only
+ * rises and is capped at the quiz length, the hill never exceeds its cap. Returns
+ * the same reference when nothing changes (so callers can skip a write).
+ */
+function syncAnthill(
+  prev: AntArmyMap,
+  topicId: string,
+  desiredWorkers: number,
+): AntArmyMap {
+  if (!isQuizTopic(topicId)) return prev;
+  const target = Math.min(desiredWorkers, anthillCap(topicId));
+  const existing = prev[topicId] ?? [];
+  if (existing.length >= target) return prev;
+  const added = Array.from({ length: target - existing.length }, (_, i) =>
+    makeArmyAnt(topicId, existing.length + i),
+  );
+  return { ...prev, [topicId]: [...existing, ...added] };
+}
+
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const devMode = user?.email?.trim().toLowerCase() === DEV_EMAIL;
@@ -91,6 +129,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [quizzes, setQuizzes] = useState<QuizResultMap>({});
   const [stats, setStats] = useState<UserStats>({ ...emptyStats });
   const [mistakes, setMistakes] = useState<MistakeMap>({});
+  const [antArmy, setAntArmy] = useState<AntArmyMap>({});
   const uidRef = useRef<string | null>(null);
 
   // Mirror the latest state so persist() can always write a consistent, full
@@ -99,6 +138,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const quizzesRef = useRef<QuizResultMap>(quizzes);
   const statsRef = useRef<UserStats>(stats);
   const mistakesRef = useRef<MistakeMap>(mistakes);
+  const antArmyRef = useRef<AntArmyMap>(antArmy);
+  // True once the current user's data has finished loading. Until then persist()
+  // is a no-op, so an early mutation can never overwrite the stored snapshot
+  // (e.g. the freshly recruited/promoted ants) with pre-load empty state.
+  const hasLoadedRef = useRef(false);
   // Keep the mirrors in sync after each commit so persist() can always read the
   // latest full snapshot. (Done in an effect, not during render, so we never
   // mutate a ref while rendering.)
@@ -107,11 +151,13 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     quizzesRef.current = quizzes;
     statsRef.current = stats;
     mistakesRef.current = mistakes;
-  }, [progress, quizzes, stats, mistakes]);
+    antArmyRef.current = antArmy;
+  }, [progress, quizzes, stats, mistakes, antArmy]);
 
   useEffect(() => {
     let active = true;
     uidRef.current = user?.uid ?? null;
+    hasLoadedRef.current = false;
     // Treat "no user" as an immediately-resolved empty load so that every
     // state update happens inside the async callback (never synchronously in
     // the effect body).
@@ -122,13 +168,23 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           quizzes: {} as QuizResultMap,
           stats: { ...emptyStats },
           mistakes: {} as MistakeMap,
+          antArmy: {} as AntArmyMap,
         });
     load.then((data) => {
       if (!active) return;
+      // Prime the ref mirrors synchronously so the very next persist() (before
+      // the sync effect above re-runs) already sees the loaded snapshot.
+      progressRef.current = data.progress;
+      quizzesRef.current = data.quizzes;
+      statsRef.current = data.stats;
+      mistakesRef.current = data.mistakes;
+      antArmyRef.current = data.antArmy;
+      hasLoadedRef.current = true;
       setProgress(data.progress);
       setQuizzes(data.quizzes);
       setStats(data.stats);
       setMistakes(data.mistakes);
+      setAntArmy(data.antArmy);
       setLoading(false);
     });
     return () => {
@@ -142,14 +198,18 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       nextQuizzes: QuizResultMap,
       nextStats: UserStats,
       nextMistakes: MistakeMap,
+      nextAntArmy: AntArmyMap,
     ) => {
       const uid = uidRef.current;
-      if (!uid) return;
+      // Never write before the initial load resolves, or we could clobber the
+      // stored snapshot with empty pre-load state.
+      if (!uid || !hasLoadedRef.current) return;
       void saveUserData(uid, {
         progress: nextProgress,
         quizzes: nextQuizzes,
         stats: nextStats,
         mistakes: nextMistakes,
+        antArmy: nextAntArmy,
       });
     },
     [],
@@ -221,6 +281,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
             quizzesRef.current,
             nextStats,
             mistakesRef.current,
+            antArmyRef.current,
           );
           return nextStats;
         });
@@ -292,9 +353,24 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           : mistakesRef.current;
         if (isNewBest) setMistakes(nextMistakes);
 
+        // Correct answers staff this topic's anthill: keep its worker count in
+        // step with the best score (quiz topics only; no-op otherwise).
+        const nextAntArmy = syncAnthill(
+          antArmyRef.current,
+          lessonId,
+          entry.bestCorrect,
+        );
+        if (nextAntArmy !== antArmyRef.current) setAntArmy(nextAntArmy);
+
         setStats((prevStats) => {
           const nextStats = bumpStreak(prevStats);
-          persist(progressRef.current, nextQuizzes, nextStats, nextMistakes);
+          persist(
+            progressRef.current,
+            nextQuizzes,
+            nextStats,
+            nextMistakes,
+            nextAntArmy,
+          );
           return nextStats;
         });
 
@@ -332,12 +408,167 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
       const nextStats = bumpStreak(statsRef.current);
 
+      // Freeing a colony ant raises the best score, which staffs one more ant in
+      // this topic's anthill (capped). Never exceeds the cap because best <= total.
+      const nextAntArmy = syncAnthill(
+        antArmyRef.current,
+        lessonId,
+        nextQuizzes[lessonId]?.bestCorrect ?? 0,
+      );
+
       setMistakes(nextMistakes);
       setQuizzes(nextQuizzes);
       setStats(nextStats);
-      persist(progressRef.current, nextQuizzes, nextStats, nextMistakes);
+      if (nextAntArmy !== antArmyRef.current) setAntArmy(nextAntArmy);
+      persist(
+        progressRef.current,
+        nextQuizzes,
+        nextStats,
+        nextMistakes,
+        nextAntArmy,
+      );
     },
     [persist],
+  );
+
+  const recruitAnt = useCallback(
+    (topicId: string) => {
+      setAntArmy((prev) => {
+        const list = prev[topicId] ?? [];
+        if (list.length >= anthillCap(topicId)) return prev;
+        const next: AntArmyMap = {
+          ...prev,
+          [topicId]: [...list, makeArmyAnt(topicId, list.length)],
+        };
+        setStats((prevStats) => {
+          const nextStats = bumpStreak(prevStats);
+          persist(
+            progressRef.current,
+            quizzesRef.current,
+            nextStats,
+            mistakesRef.current,
+            next,
+          );
+          return nextStats;
+        });
+        return next;
+      });
+    },
+    [persist],
+  );
+
+  const attemptAntUpgrade = useCallback(
+    (topicId: string, antId: string, bothCorrect: boolean) => {
+      setAntArmy((prev) => {
+        const list = prev[topicId] ?? [];
+        const idx = list.findIndex((a) => a.id === antId);
+        if (idx < 0) return prev;
+        const ant = list[idx];
+        // Re-check eligibility so a stale UI can't sneak an extra attempt in.
+        if (!isEligible(ant)) return prev;
+        // Promotion to GENERAL also requires every neighbouring anthill to be
+        // at least tier 1; block it here as a safety net behind the UI gate.
+        if (
+          ant.rank === 1 &&
+          !neighborsAllowGeneral(topicId, (id) =>
+            computeAnthillTier(prev[id] ?? [], id),
+          )
+        ) {
+          return prev;
+        }
+
+        const today = todayStr();
+        const usedToday = attemptsUsedToday(ant, today);
+        const updated: ArmyAnt = bothCorrect
+          ? {
+              ...ant,
+              rank: (ant.rank + 1) as AntRank,
+              lastRankChange: today,
+              lastRankChangeAt: Date.now(),
+              attemptDate: today,
+              attemptsUsed: 0,
+            }
+          : { ...ant, attemptDate: today, attemptsUsed: usedToday + 1 };
+
+        const nextList = list.slice();
+        nextList[idx] = updated;
+        const next: AntArmyMap = { ...prev, [topicId]: nextList };
+
+        setStats((prevStats) => {
+          const nextStats = bumpStreak(prevStats);
+          persist(
+            progressRef.current,
+            quizzesRef.current,
+            nextStats,
+            mistakesRef.current,
+            next,
+          );
+          return nextStats;
+        });
+        return next;
+      });
+    },
+    [persist],
+  );
+
+  // TESTING ONLY: mutate a single ant, bypassing the wait/attempt gates.
+  const devMutateAnt = useCallback(
+    (topicId: string, antId: string, mode: "ready" | "upgrade") => {
+      setAntArmy((prev) => {
+        const list = prev[topicId] ?? [];
+        const idx = list.findIndex((a) => a.id === antId);
+        if (idx < 0) return prev;
+        const ant = list[idx];
+        let updated: ArmyAnt;
+        if (mode === "ready") {
+          // Make it eligible right now: push the wait fully into the past and
+          // refresh today's attempts.
+          updated = {
+            ...ant,
+            lastRankChangeAt: Date.now() - UPGRADE_WAIT_MS - 1000,
+            attemptDate: null,
+            attemptsUsed: 0,
+          };
+        } else {
+          if (ant.rank >= MAX_RANK) return prev;
+          // Promotion to general respects the neighbour rule even via the dev
+          // shortcut: every adjacent anthill must be at least tier 1.
+          if (
+            ant.rank === 1 &&
+            !neighborsAllowGeneral(topicId, (id) =>
+              computeAnthillTier(prev[id] ?? [], id),
+            )
+          ) {
+            return prev;
+          }
+          updated = {
+            ...ant,
+            rank: (ant.rank + 1) as AntRank,
+            lastRankChange: todayStr(),
+            lastRankChangeAt: Date.now(),
+            attemptDate: todayStr(),
+            attemptsUsed: 0,
+          };
+        }
+        const nextList = list.slice();
+        nextList[idx] = updated;
+        const next: AntArmyMap = { ...prev, [topicId]: nextList };
+        persist(
+          progressRef.current,
+          quizzesRef.current,
+          statsRef.current,
+          mistakesRef.current,
+          next,
+        );
+        return next;
+      });
+    },
+    [persist],
+  );
+
+  const anthillTier = useCallback(
+    (topicId: string): AntRank => computeAnthillTier(antArmy[topicId] ?? [], topicId),
+    [antArmy],
   );
 
   const mistakeCount = useCallback(
@@ -382,6 +613,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     mistakeCount,
     totalMistakes,
     resolveMistake,
+    antArmy,
+    anthillTier,
+    recruitAnt,
+    attemptAntUpgrade,
+    devMutateAnt,
     completedCount,
     totalLessons: course.lessons.length,
     quizPointsEarned,

@@ -18,3 +18,10 @@ firebase-debug.log
 *.tsbuildinfo
 vite.config.d.ts
 vite.config.js
+
+# Cursor / local agent artifacts
+.cursor/
+.cursor-checkpoints/
+.agents/
+.svg-tmp/
+skills-lock.json
