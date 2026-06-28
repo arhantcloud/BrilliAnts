@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useProgress } from "../progress/progress-context";
 import { shortTitle } from "../content/shortTitles";
 import { course } from "../content/course";
@@ -36,8 +37,9 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/** A top-down grassy ground layer: scattered tufts, pebbles, and a dirt path. */
-function GroundTexture() {
+/** A top-down grassy ground layer: scattered tufts, pebbles, and a dirt path.
+ *  Memoised (no props) so it never re-renders when the parent does. */
+const GroundTexture = memo(function GroundTexture() {
   // A tall viewBox matching the field's aspect ratio so `slice` barely crops and
   // the tufts spread evenly across the whole base instead of bunching up top.
   const W = 400;
@@ -89,7 +91,7 @@ function GroundTexture() {
       {els}
     </svg>
   );
-}
+});
 
 /** A single rank chip for the legend. */
 function LegendChip({ rank }: { rank: 0 | 1 | 2 }) {
@@ -115,9 +117,26 @@ type Active =
  * below the final exam on the course path.
  */
 export default function AntArmy() {
-  const { antArmy: army, anthillTier, devMutateAnt, lessonStatus } =
+  const navigate = useNavigate();
+  const { antArmy: army, anthillTier, devMutateAnt, lessonStatus, battleUnlocked } =
     useProgress();
   const [active, setActive] = useState<Active>(null);
+
+  // Only animate the roaming ants / countdown rings while the scene is actually
+  // on screen — otherwise ~30 rAF loops + per-ant timers run constantly and make
+  // the whole page (and its scrolling) janky.
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = sceneRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => setInView(entries[0]?.isIntersecting ?? false),
+      { rootMargin: "300px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   function handleAntClick(topicId: string, ant: ArmyAnt) {
     // Open the per-ant menu (real upgrade challenge + testing shortcuts).
@@ -156,12 +175,24 @@ export default function AntArmy() {
         </div>
 
         {/* Subtitle strip */}
-        <div className="bg-lime-50 px-5 py-2 text-xs font-bold text-[#4d7a30] sm:px-8">
-          Recruit ants, then promote them through harder challenges.
+        <div className="flex items-center justify-between gap-3 bg-lime-50 px-5 py-2 text-xs font-bold text-[#4d7a30] sm:px-8">
+          <span>Recruit ants, then promote them through harder challenges.</span>
+          {battleUnlocked && (
+            <button
+              type="button"
+              onClick={() => navigate("/battle")}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#4d7a30] px-3 py-1 text-[11px] font-bold text-white shadow-sm transition hover:brightness-110 active:scale-95"
+            >
+              <span aria-hidden>⚔️</span> Battle
+            </button>
+          )}
         </div>
 
         {/* The grassy base: anthills scattered organically across a large field */}
-        <div className="relative bg-gradient-to-b from-[#7cae54] to-[#5f8f3c] p-3 sm:p-5">
+        <div
+          ref={sceneRef}
+          className="army-scene relative bg-gradient-to-b from-[#7cae54] to-[#5f8f3c] p-3 sm:p-5"
+        >
           <GroundTexture />
           <div className="relative mx-auto h-[1480px] w-full max-w-3xl sm:h-[1120px]">
             {ARMY_TOPIC_IDS.map((topicId, i) => {
@@ -183,6 +214,7 @@ export default function AntArmy() {
                     topicLabel={label}
                     tier={anthillTier(topicId)}
                     ants={army[topicId] ?? []}
+                    active={inView}
                     generalReady={neighborsAllowGeneral(topicId, anthillTier)}
                     recruitUnlocked={lessonStatus(topicId) === "completed"}
                     onAntClick={(ant) => handleAntClick(topicId, ant)}

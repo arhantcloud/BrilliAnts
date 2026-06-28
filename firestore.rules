@@ -9,6 +9,7 @@ service cloud.firestore {
     //     stats:    UserStats,
     //     mistakes: { [lessonId]: Mistake[] },
     //     antArmy:  { [topicId]: ArmyAnt[] },
+    //     battle:   { [levelId]: BattleLevelResult },
     //   }
     // (see src/data/persistence.ts and src/types.ts)
 
@@ -45,16 +46,23 @@ service cloud.firestore {
       return a is map && a.size() <= 50;
     }
 
+    // Validates the battle map of levelId -> BattleLevelResult (Battle mode).
+    function isValidBattle(b) {
+      // One entry per campaign level; cap generously to prevent abuse.
+      return b is map && b.size() <= 200;
+    }
+
     // Validates the resulting user document (works for create and merge-update,
     // since request.resource.data is the full post-write document).
     function isValidUserDoc(data) {
-      return data.keys().hasOnly(['progress', 'quizzes', 'stats', 'mistakes', 'antArmy'])
+      return data.keys().hasOnly(['progress', 'quizzes', 'stats', 'mistakes', 'antArmy', 'battle'])
         // Cap collection size to prevent storage abuse / DoS.
         && (!('progress' in data) || (data.progress is map && data.progress.size() <= 200))
         && (!('quizzes' in data) || isValidQuizzes(data.quizzes))
         && (!('stats' in data) || isValidStats(data.stats))
         && (!('mistakes' in data) || isValidMistakes(data.mistakes))
-        && (!('antArmy' in data) || isValidAntArmy(data.antArmy));
+        && (!('antArmy' in data) || isValidAntArmy(data.antArmy))
+        && (!('battle' in data) || isValidBattle(data.battle));
     }
 
     match /users/{uid} {

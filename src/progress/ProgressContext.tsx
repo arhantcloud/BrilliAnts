@@ -13,6 +13,7 @@ import type {
   AntArmyMap,
   AntRank,
   ArmyAnt,
+  BattleProgressMap,
   LessonProgress,
   LessonStatus,
   Mistake,
@@ -130,6 +131,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<UserStats>({ ...emptyStats });
   const [mistakes, setMistakes] = useState<MistakeMap>({});
   const [antArmy, setAntArmy] = useState<AntArmyMap>({});
+  const [battle, setBattle] = useState<BattleProgressMap>({});
   const uidRef = useRef<string | null>(null);
 
   // Mirror the latest state so persist() can always write a consistent, full
@@ -139,6 +141,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const statsRef = useRef<UserStats>(stats);
   const mistakesRef = useRef<MistakeMap>(mistakes);
   const antArmyRef = useRef<AntArmyMap>(antArmy);
+  const battleRef = useRef<BattleProgressMap>(battle);
   // True once the current user's data has finished loading. Until then persist()
   // is a no-op, so an early mutation can never overwrite the stored snapshot
   // (e.g. the freshly recruited/promoted ants) with pre-load empty state.
@@ -152,7 +155,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     statsRef.current = stats;
     mistakesRef.current = mistakes;
     antArmyRef.current = antArmy;
-  }, [progress, quizzes, stats, mistakes, antArmy]);
+    battleRef.current = battle;
+  }, [progress, quizzes, stats, mistakes, antArmy, battle]);
 
   useEffect(() => {
     let active = true;
@@ -169,6 +173,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           stats: { ...emptyStats },
           mistakes: {} as MistakeMap,
           antArmy: {} as AntArmyMap,
+          battle: {} as BattleProgressMap,
         });
     load.then((data) => {
       if (!active) return;
@@ -179,12 +184,14 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       statsRef.current = data.stats;
       mistakesRef.current = data.mistakes;
       antArmyRef.current = data.antArmy;
+      battleRef.current = data.battle;
       hasLoadedRef.current = true;
       setProgress(data.progress);
       setQuizzes(data.quizzes);
       setStats(data.stats);
       setMistakes(data.mistakes);
       setAntArmy(data.antArmy);
+      setBattle(data.battle);
       setLoading(false);
     });
     return () => {
@@ -199,6 +206,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       nextStats: UserStats,
       nextMistakes: MistakeMap,
       nextAntArmy: AntArmyMap,
+      nextBattle: BattleProgressMap,
     ) => {
       const uid = uidRef.current;
       // Never write before the initial load resolves, or we could clobber the
@@ -210,6 +218,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         stats: nextStats,
         mistakes: nextMistakes,
         antArmy: nextAntArmy,
+        battle: nextBattle,
       });
     },
     [],
@@ -282,6 +291,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
             nextStats,
             mistakesRef.current,
             antArmyRef.current,
+            battleRef.current,
           );
           return nextStats;
         });
@@ -318,6 +328,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     },
     [progress, quizzes, devMode],
   );
+
+  const battleUnlocked = quizStatus(FINAL_QUIZ_ID) === "passed";
 
   const recordQuizAttempt = useCallback(
     (
@@ -370,6 +382,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
             nextStats,
             nextMistakes,
             nextAntArmy,
+            battleRef.current,
           );
           return nextStats;
         });
@@ -426,6 +439,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         nextStats,
         nextMistakes,
         nextAntArmy,
+        battleRef.current,
       );
     },
     [persist],
@@ -448,6 +462,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
             nextStats,
             mistakesRef.current,
             next,
+            battleRef.current,
           );
           return nextStats;
         });
@@ -502,6 +517,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
             nextStats,
             mistakesRef.current,
             next,
+            battleRef.current,
           );
           return nextStats;
         });
@@ -558,6 +574,38 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           quizzesRef.current,
           statsRef.current,
           mistakesRef.current,
+          next,
+          battleRef.current,
+        );
+        return next;
+      });
+    },
+    [persist],
+  );
+
+  const recordBattleResult = useCallback(
+    (levelId: string, stars: 0 | 1 | 2 | 3, remainingHpPct: number) => {
+      setBattle((prev) => {
+        const prevEntry = prev[levelId];
+        const keepPrev =
+          prevEntry != null &&
+          (prevEntry.stars > stars ||
+            (prevEntry.stars === stars &&
+              prevEntry.bestRemainingHpPct >= remainingHpPct));
+        const entry = keepPrev
+          ? { ...prevEntry, clearedAt: Date.now() }
+          : {
+              stars,
+              bestRemainingHpPct: remainingHpPct,
+              clearedAt: Date.now(),
+            };
+        const next: BattleProgressMap = { ...prev, [levelId]: entry };
+        persist(
+          progressRef.current,
+          quizzesRef.current,
+          statsRef.current,
+          mistakesRef.current,
+          antArmyRef.current,
           next,
         );
         return next;
@@ -618,6 +666,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     recruitAnt,
     attemptAntUpgrade,
     devMutateAnt,
+    battleProgress: battle,
+    recordBattleResult,
+    battleUnlocked,
     completedCount,
     totalLessons: course.lessons.length,
     quizPointsEarned,

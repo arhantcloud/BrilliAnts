@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import type {
   AntArmyMap,
   AntRank,
+  BattleProgressMap,
   LessonStatus,
   MistakeMap,
   ProgressMap,
@@ -89,6 +90,19 @@ export type ProgressContextValue = {
     antId: string,
     mode: "ready" | "upgrade",
   ) => void;
+  /** Best result per Battle campaign level. */
+  battleProgress: BattleProgressMap;
+  /**
+   * Record a Battle level outcome; keeps the best stars (and best remaining-HP
+   * tiebreak), stamps clearedAt, and persists.
+   */
+  recordBattleResult: (
+    levelId: string,
+    stars: 0 | 1 | 2 | 3,
+    remainingHpPct: number,
+  ) => void;
+  /** Whether Battle mode is unlocked (the final exam has been passed). */
+  battleUnlocked: boolean;
   completedCount: number;
   totalLessons: number;
   /** Sum of best correct answers across all lesson quizzes. */

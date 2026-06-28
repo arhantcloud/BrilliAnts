@@ -137,6 +137,7 @@ export default function CoursePath() {
     quizPointsEarned,
     quizPointsTotal,
     totalMistakes,
+    battleUnlocked,
   } = useProgress();
 
   if (loading) {
@@ -281,26 +282,57 @@ export default function CoursePath() {
         )}
 
         {!pendingQuizLesson && !nextLesson && (
-          <button
-            onClick={() =>
-              document
-                .getElementById("ant-army")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-            className="w-full rounded-2xl bg-[#4d7a30] p-5 text-left text-white shadow-md transition active:scale-[0.99] sm:flex-1"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-lime-100">
-              Course complete
-            </p>
-            <p className="mt-1 text-lg font-bold">Train your Ant Army</p>
-            <p className="mt-0.5 text-sm text-lime-50/90">
-              Recruit ants from your answers and promote them through harder
-              challenges.
-            </p>
-            <span className="mt-3 inline-block rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#4d7a30]">
-              Go to Ant Army →
-            </span>
-          </button>
+          <Fragment>
+            <button
+              onClick={() =>
+                document
+                  .getElementById("ant-army")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="w-full rounded-2xl bg-[#4d7a30] p-5 text-left text-white shadow-md transition active:scale-[0.99] sm:flex-1"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-lime-100">
+                Course complete
+              </p>
+              <p className="mt-1 text-lg font-bold">Train your Ant Army</p>
+              <p className="mt-0.5 text-sm text-lime-50/90">
+                Recruit ants from your answers and promote them through harder
+                challenges.
+              </p>
+              <span className="mt-3 inline-block rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#4d7a30]">
+                Go to Ant Army →
+              </span>
+            </button>
+
+            {battleUnlocked ? (
+              <button
+                onClick={() => navigate("/battle")}
+                className="w-full rounded-2xl bg-gradient-to-br from-[#5f8f3c] to-[#4d7a30] p-5 text-left text-white shadow-md transition active:scale-[0.99] sm:flex-1"
+              >
+                <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-lime-100">
+                  <span aria-hidden>⚔️</span> Battle unlocked
+                </p>
+                <p className="mt-1 text-lg font-bold">Enter Battle</p>
+                <p className="mt-0.5 text-sm text-lime-50/90">
+                  Lead your Ant Army to defend the anthill against waves of
+                  topic enemies.
+                </p>
+                <span className="mt-3 inline-block rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#4d7a30]">
+                  Go to Battle →
+                </span>
+              </button>
+            ) : (
+              <div className="w-full rounded-2xl bg-stone-100 p-5 text-left text-stone-500 ring-1 ring-stone-200 sm:flex-1">
+                <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-stone-400">
+                  <span aria-hidden>🔒</span> Battle locked
+                </p>
+                <p className="mt-1 text-lg font-bold text-stone-600">Battle</p>
+                <p className="mt-0.5 text-sm text-stone-500">
+                  Pass the final exam to unlock Battle.
+                </p>
+              </div>
+            )}
+          </Fragment>
         )}
 
         <button

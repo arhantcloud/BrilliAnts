@@ -5,6 +5,7 @@ import {
   BADGES,
   MAX_STARS,
   WARLORD_INDEX,
+  CONQUEROR_INDEX,
   armyStars,
   currentBadgeIndex,
 } from "./badges";
@@ -48,7 +49,7 @@ function Emblem({
  * earned badges marked achieved and higher ones shown as locked.
  */
 export default function CourseBadge() {
-  const { anthillTier, quizResult } = useProgress();
+  const { anthillTier, quizResult, battleProgress } = useProgress();
   const [open, setOpen] = useState(false);
 
   const stars = armyStars(anthillTier);
@@ -58,7 +59,11 @@ export default function CourseBadge() {
     !!finalResult &&
     finalResult.total > 0 &&
     finalResult.bestCorrect === finalResult.total;
-  const idx = currentBadgeIndex(stars, finalPerfect);
+  // Conqueror additionally requires clearing the Battle campaign (≥3 levels at ≥1★).
+  const campaignCleared =
+    Object.values(battleProgress).filter((r) => r.stars >= 1).length >= 3;
+  const trophies = Object.values(battleProgress).reduce((s, r) => s + r.stars, 0);
+  const idx = currentBadgeIndex(stars, finalPerfect, campaignCleared);
   const badge = BADGES[idx];
 
   return (
@@ -84,7 +89,14 @@ export default function CourseBadge() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-base font-extrabold">Army ranks</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-extrabold">Army ranks</h2>
+                {trophies > 0 && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                    🏆 {trophies}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -153,9 +165,11 @@ export default function CourseBadge() {
                     >
                       {achieved
                         ? "Achieved"
-                        : i === WARLORD_INDEX && stars >= MAX_STARS
-                          ? "Final 100%"
-                          : `${b.minStars}★`}
+                        : i === CONQUEROR_INDEX && stars >= MAX_STARS
+                          ? "Clear campaign"
+                          : i === WARLORD_INDEX && stars >= MAX_STARS
+                            ? "Final 100%"
+                            : `${b.minStars}★`}
                     </span>
                   </li>
                 );

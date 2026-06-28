@@ -5,7 +5,10 @@
  * is 1★ and a grand fortress (tier 2) is 2★, so the six anthills yield 0–12★.
  * Because a hill can only reach tier 2 after tier 1, the total is monotonic and
  * the badge ladder below is strictly increasing — earning a higher badge always
- * implies every lower one is already achieved.
+ * implies every lower one is already achieved. The two top badges (Warlord and
+ * Conqueror) share the maximum star requirement and are separated by extra
+ * gates: a perfect final exam for Warlord, plus a cleared Battle campaign for
+ * the topmost Conqueror.
  */
 
 import type { AntRank } from "../types";
@@ -85,10 +88,21 @@ export const BADGES: Badge[] = [
     color: "#c2912f", // warm gold crown
     blurb: "Raise every anthill to a fortress (12★) and score 100% on the final exam.",
   },
+  {
+    id: "conqueror",
+    label: "Conqueror",
+    minStars: MAX_STARS,
+    glyph: "🏆",
+    color: "#b5532e", // warm terracotta
+    blurb: "Clear the Battle campaign with a maxed army.",
+  },
 ];
 
-/** Index of the top badge (Warlord), which has the extra final-exam gate. */
-export const WARLORD_INDEX = BADGES.length - 1;
+/** Index of the Warlord badge, which has the extra final-exam gate. */
+export const WARLORD_INDEX = BADGES.findIndex((b) => b.id === "warlord");
+
+/** Index of the top badge (Conqueror), gated by clearing the Battle campaign. */
+export const CONQUEROR_INDEX = BADGES.findIndex((b) => b.id === "conqueror");
 
 /** Total army stars = sum of every anthill's tier. */
 export function armyStars(anthillTier: (topicId: string) => AntRank): number {
@@ -96,15 +110,23 @@ export function armyStars(anthillTier: (topicId: string) => AntRank): number {
 }
 
 /**
- * Index of the highest badge earned at the given star total. The top badge
- * (Warlord) additionally requires a perfect final exam; without it, the rank is
- * capped one below, no matter how many army stars are earned.
+ * Index of the highest badge earned at the given star total. The top two badges
+ * share the maximum star requirement but add gates: Conqueror also requires
+ * clearing the Battle campaign (on top of a perfect final), and Warlord requires
+ * a perfect final exam. Missing a gate caps the rank one tier lower.
  */
-export function currentBadgeIndex(stars: number, finalPerfect = true): number {
+export function currentBadgeIndex(
+  stars: number,
+  finalPerfect = true,
+  campaignCleared = true,
+): number {
   let idx = 0;
   for (let i = 0; i < BADGES.length; i++) {
     if (stars >= BADGES[i].minStars) idx = i;
   }
+  // Conqueror also requires clearing the Battle campaign (and a perfect final, since it sits above Warlord).
+  if (idx === CONQUEROR_INDEX && !(finalPerfect && campaignCleared)) idx = WARLORD_INDEX;
+  // Warlord requires a perfect final exam.
   if (idx === WARLORD_INDEX && !finalPerfect) idx = WARLORD_INDEX - 1;
   return idx;
 }

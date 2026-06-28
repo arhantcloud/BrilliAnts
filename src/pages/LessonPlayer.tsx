@@ -15,19 +15,36 @@ export default function LessonPlayer() {
   const lesson = course.lessons[lessonIndex];
 
   // Resume from the first incomplete slide; if the lesson was already finished,
-  // start at the beginning for review.
-  const initialIndex = useMemo(() => {
-    if (!lesson) return 0;
+  // start at the beginning for review with every slide unlocked. `furthest` is
+  // the first not-yet-completed slide and acts as the navigation ceiling: any
+  // slide before it is completed and freely browsable.
+  const { initialIndex, initialFurthest } = useMemo(() => {
+    if (!lesson) return { initialIndex: 0, initialFurthest: 0 };
     const resume = resumeIndex(lessonId);
-    return resume >= lesson.slides.length ? 0 : resume;
+    const slideCount = lesson.slides.length;
+    if (resume >= slideCount) {
+      return { initialIndex: 0, initialFurthest: slideCount };
+    }
+    return { initialIndex: resume, initialFurthest: resume };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
   const [current, setCurrent] = useState(initialIndex);
+  const [furthest, setFurthest] = useState(initialFurthest);
   const [advanceReady, setAdvanceReady] = useState(false);
   const [finished, setFinished] = useState(false);
 
   const handleSlideComplete = useCallback(() => setAdvanceReady(true), []);
+
+  const goBack = useCallback(() => {
+    setAdvanceReady(false);
+    setCurrent((c) => Math.max(0, c - 1));
+  }, []);
+
+  const goForward = useCallback(() => {
+    setAdvanceReady(false);
+    setCurrent((c) => c + 1);
+  }, []);
 
   if (!lesson) {
     return (
@@ -47,6 +64,8 @@ export default function LessonPlayer() {
 
   function onContinue() {
     completeSlide(lessonId, current, total);
+    const next = current + 1;
+    setFurthest((f) => Math.max(f, next));
     if (isLast) {
       setFinished(true);
     } else {
@@ -55,7 +74,7 @@ export default function LessonPlayer() {
       // slide's own mount-time onComplete (e.g. explore/review slides), which
       // runs after this parent update.
       setAdvanceReady(false);
-      setCurrent((c) => c + 1);
+      setCurrent(next);
     }
   }
 
@@ -160,7 +179,33 @@ export default function LessonPlayer() {
     );
   }
 
-  const progressPct = Math.round(((current + (advanceReady ? 1 : 0)) / total) * 100);
+  // A slide before the frontier is already completed and freely browsable; the
+  // slide at the frontier still needs its interaction satisfied to advance.
+  const isReviewingCompleted = current < furthest;
+  const canGoBack = current > 0;
+  const canGoForward = current < furthest && current < total - 1;
+  // Bar tracks how far the lesson has been completed, so browsing back through
+  // earlier slides doesn't make it regress; the frontier previews when ready.
+  const completedSoFar = Math.min(
+    furthest + (!isReviewingCompleted && advanceReady ? 1 : 0),
+    total,
+  );
+  const progressPct = Math.round((completedSoFar / total) * 100);
+  const primaryDisabled = !isReviewingCompleted && !advanceReady;
+  const primaryLabel = isLast
+    ? "Finish lesson"
+    : isReviewingCompleted
+      ? "Next"
+      : "Continue";
+
+  function onPrimary() {
+    if (isReviewingCompleted) {
+      if (isLast) setFinished(true);
+      else goForward();
+    } else {
+      onContinue();
+    }
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -203,14 +248,47 @@ export default function LessonPlayer() {
       </main>
 
       <footer className="relative z-[70] border-t border-stone-100 bg-white px-5 py-4 sm:px-8">
-        <div className="mx-auto w-full max-w-xl">
-        <button
-          onClick={onContinue}
-          disabled={!advanceReady}
-          className="btn-primary w-full"
-        >
-          {isLast ? "Finish lesson" : "Continue"}
-        </button>
+        <div className="mx-auto flex w-full max-w-xl items-center gap-3">
+          <button
+            onClick={goBack}
+            disabled={!canGoBack}
+            aria-label="Previous step"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-stone-200 text-stone-500 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+              <path
+                d="M15 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          {canGoForward && (
+            <button
+              onClick={goForward}
+              aria-label="Next step"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-stone-200 text-stone-500 transition hover:bg-stone-50"
+            >
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+                <path
+                  d="M9 6l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={onPrimary}
+            disabled={primaryDisabled}
+            className="btn-primary flex-1"
+          >
+            {primaryLabel}
+          </button>
         </div>
       </footer>
     </div>

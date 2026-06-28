@@ -31,11 +31,14 @@ function shortDelta(a: number, b: number): number {
 export default function ArmyAnt({
   field,
   ant,
+  active = true,
   eligible,
   onClick,
 }: {
   field: { w: number; h: number };
   ant: ArmyAntData;
+  /** Whether the scene is on screen; pauses the wander loop when false. */
+  active?: boolean;
   /** True when this ant can be upgraded right now (drives glow + click). */
   eligible: boolean;
   onClick: () => void;
@@ -72,7 +75,7 @@ export default function ArmyAnt({
   });
 
   useEffect(() => {
-    if (reduce) return;
+    if (reduce || !active) return;
     let raf = 0;
     let last = performance.now();
     const w = field.w;
@@ -129,7 +132,7 @@ export default function ArmyAnt({
 
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [reduce, field.w, field.h, x, y, rotate]);
+  }, [reduce, active, field.w, field.h, x, y, rotate]);
 
   const label = eligible
     ? `${rankLabel(ant.rank)} ant - ready to upgrade`
@@ -160,10 +163,14 @@ export default function ArmyAnt({
         <RankBadge rank={ant.rank} size={16} />
       </span>
 
-      {/* Hover graphic: this ant's own countdown ring + state label. */}
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 opacity-0 transition-opacity duration-150 group-hover/ant:opacity-100">
-        <CountdownRing ant={ant} />
-      </span>
+      {/* Hover graphic: this ant's own countdown ring + state label. Mounted
+          only while the scene is on screen (you can't hover it otherwise), so
+          its per-second timer doesn't run in the background. */}
+      {active && (
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 opacity-0 transition-opacity duration-150 group-hover/ant:opacity-100">
+          <CountdownRing ant={ant} />
+        </span>
+      )}
     </motion.button>
   );
 }

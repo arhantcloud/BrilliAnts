@@ -2,6 +2,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, firebaseEnabled } from "../firebase";
 import type {
   AntArmyMap,
+  BattleProgressMap,
   MistakeMap,
   ProgressMap,
   QuizResultMap,
@@ -20,6 +21,7 @@ export type UserData = {
   stats: UserStats;
   mistakes: MistakeMap;
   antArmy: AntArmyMap;
+  battle: BattleProgressMap;
 };
 
 const localKey = (uid: string) => `cc_userdata_${uid}`;
@@ -35,6 +37,7 @@ function readLocal(uid: string): UserData {
         stats: data.stats ?? { ...emptyStats },
         mistakes: data.mistakes ?? {},
         antArmy: data.antArmy ?? {},
+        battle: data.battle ?? {},
       };
     }
   } catch {
@@ -46,6 +49,7 @@ function readLocal(uid: string): UserData {
     stats: { ...emptyStats },
     mistakes: {},
     antArmy: {},
+    battle: {},
   };
 }
 
@@ -65,6 +69,7 @@ export async function loadUserData(uid: string): Promise<UserData> {
         stats: data.stats ?? { ...emptyStats },
         mistakes: data.mistakes ?? {},
         antArmy: data.antArmy ?? {},
+        battle: data.battle ?? {},
       };
     }
     return {
@@ -73,6 +78,7 @@ export async function loadUserData(uid: string): Promise<UserData> {
       stats: { ...emptyStats },
       mistakes: {},
       antArmy: {},
+      battle: {},
     };
   }
   return readLocal(uid);

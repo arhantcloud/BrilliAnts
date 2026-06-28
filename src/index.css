@@ -131,9 +131,28 @@
 .army-shimmer {
   animation: armyShimmer 2.4s ease-in-out infinite;
 }
+
+/* Ant Army scene: let the browser skip layout/paint of this large, SVG-heavy
+   field while it's scrolled off screen. The intrinsic-size keeps the scrollbar
+   stable; `auto` makes it remember the real rendered size after first paint. */
+.army-scene {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 800px auto 1480px;
+}
+
+/* Battle: a red danger pulse on the base while it is badly damaged. */
+@keyframes battleBaseHit {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(220, 60, 50, 0)); }
+  50% { filter: drop-shadow(0 0 9px rgba(220, 60, 50, 0.85)); }
+}
+.battle-base-hit {
+  animation: battleBaseHit 1s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .army-ready,
-  .army-shimmer {
+  .army-shimmer,
+  .battle-base-hit {
     animation: none;
   }
 }

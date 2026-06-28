@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { AntRank, ArmyAnt as ArmyAntData } from "../types";
 import ArmyAnt from "./ArmyAnt";
 import { isEligible } from "./antState";
@@ -31,7 +31,10 @@ function useWidth() {
  *  - 1 fortified: + a ring of vertical log palisades, a plank gate, a pennant.
  *  - 2 fortress: + a stone-block ring, two accent banners, a glowing gate, sparkles.
  */
-function AnthillMound({
+/** The anthill mound SVG. Memoised so the (heavy) node tree isn't reconciled
+ *  on every parent re-render — its props are primitive, so it only updates when
+ *  the tier/accent actually change. */
+export const AnthillMound = memo(function AnthillMound({
   tier,
   accent,
   idPrefix,
@@ -226,7 +229,7 @@ function AnthillMound({
       <circle cx="150" cy="131" r="2.5" fill="#b9905a" opacity="0.7" />
     </svg>
   );
-}
+});
 
 /* --------------------------------- the plot --------------------------------- */
 
@@ -241,6 +244,7 @@ export default function Anthill({
   topicLabel,
   tier,
   ants,
+  active = true,
   generalReady = true,
   recruitUnlocked = true,
   onAntClick,
@@ -250,6 +254,8 @@ export default function Anthill({
   topicLabel: string;
   tier: AntRank;
   ants: ArmyAntData[];
+  /** Whether the scene is on screen; pauses ant roaming/timers when false. */
+  active?: boolean;
   /** Whether neighbouring anthills are fortified enough for a warrior here to
    *  reach general; gates the "ready" glow on rank-1 ants. */
   generalReady?: boolean;
@@ -278,6 +284,7 @@ export default function Anthill({
               key={ant.id}
               field={{ w: width, h: FIELD_H }}
               ant={ant}
+              active={active}
               eligible={
                 isEligible(ant) && !(ant.rank === 1 && !generalReady)
               }

@@ -176,3 +176,14 @@ export type ArmyAnt = {
 
 /** Map of topic (lesson) id -> the ants stationed at its anthill. */
 export type AntArmyMap = Record<string, ArmyAnt[]>;
+
+/** Result of clearing one Battle campaign level; best is kept across attempts. */
+export type BattleLevelResult = {
+  stars: 0 | 1 | 2 | 3;
+  /** Best remaining base-HP percentage (0-100) achieved on this level. */
+  bestRemainingHpPct: number;
+  clearedAt: number;
+};
+
+/** Map of battle level id -> best result. */
+export type BattleProgressMap = Record<string, BattleLevelResult>;

@@ -5,6 +5,7 @@ import CoursePath from "./pages/CoursePath";
 import LessonPlayer from "./pages/LessonPlayer";
 import QuizPlayer from "./pages/QuizPlayer";
 import AntColony from "./pages/AntColony";
+import BattlePage from "./battle/BattlePage";
 import AntMascot from "./mascot/AntMascot";
 import type { ReactNode } from "react";
 
@@ -85,6 +86,14 @@ export default function App() {
           element={
             <RequireAuth>
               <AntColony />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/battle"
+          element={
+            <RequireAuth>
+              <BattlePage />
             </RequireAuth>
           }
         />
