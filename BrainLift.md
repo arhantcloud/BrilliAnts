@@ -1,6 +1,6 @@
 # Brain Lift: Student Mistakes in Learning Systems
 
-## Spiky POV (DOK 4 — overarching)
+## Spiky POV (DOK 4)
 
 Education applications *need* to focus on a learner's mistakes. This *can* be achieved without frustrating the learner, even though consensus says otherwise, through a **delay of action** and reframing mistake-correction as a *separate, engaging process* which the learner takes ownership of.
 
